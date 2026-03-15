@@ -1,516 +1,1117 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="th">
-
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Task Board — Final Lab</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-
-<style>
-
-*{
-box-sizing:border-box;
-margin:0;
-padding:0;
-}
-
-:root{
-
---bg:#f7f7fb;
---surface:#ffffff;
---surface2:#f3f4ff;
-
---border:#e5e7ff;
---border2:#dfe1ff;
-
---text:#333;
---muted:#7b7b95;
-
---blue:#7aa8ff;
---green:#6dd8b1;
---yellow:#ffd77b;
---red:#ff8c9d;
-
---accent:#caa6ff;
-
---radius:12px;
-
---sidebar-w:250px;
-
-}
-
-body{
-font-family:'Nunito',sans-serif;
-background:linear-gradient(135deg,#f6f7ff,#fff5fb);
-color:var(--text);
-height:100vh;
-overflow:hidden;
-}
-
-.hidden{
-display:none!important;
-}
-
-/* AUTH */
-
-#auth-page{
-display:flex;
-align-items:center;
-justify-content:center;
-height:100%;
-}
-
-.auth-box{
-width:400px;
-background:var(--surface);
-padding:40px;
-border-radius:20px;
-border:1px solid var(--border);
-box-shadow:0 20px 40px rgba(0,0,0,0.08);
-}
-
-.auth-title{
-font-family:'Poppins',sans-serif;
-font-size:28px;
-margin-bottom:5px;
-}
-
-.auth-subtitle{
-font-size:14px;
-color:var(--muted);
-margin-bottom:25px;
-}
-
-.form-group{
-margin-bottom:15px;
-}
-
-.form-group label{
-font-size:13px;
-font-weight:600;
-}
-
-.input{
-width:100%;
-padding:10px;
-border-radius:10px;
-border:1px solid var(--border);
-font-family:'Nunito';
-margin-top:4px;
-}
-
-.input:focus{
-outline:none;
-border-color:var(--accent);
-}
-
-.btn{
-border:none;
-cursor:pointer;
-padding:10px 18px;
-border-radius:10px;
-font-family:'Poppins';
-font-weight:600;
-}
-
-.btn-primary{
-background:var(--accent);
-color:white;
-width:100%;
-}
-
-.btn-secondary{
-background:var(--surface2);
-}
-
-.btn-danger{
-background:#ffe2e6;
-color:var(--red);
-}
-
-.btn-sm{
-font-size:12px;
-padding:6px 10px;
-}
-
-.auth-hint{
-margin-top:20px;
-font-size:12px;
-background:#fafaff;
-padding:10px;
-border-radius:10px;
-border:1px solid var(--border);
-}
-
-/* SIDEBAR */
-
-.sidebar{
-position:fixed;
-left:0;
-top:0;
-bottom:0;
-width:var(--sidebar-w);
-background:var(--surface);
-border-right:1px solid var(--border);
-padding:20px;
-display:flex;
-flex-direction:column;
-}
-
-.sidebar-logo{
-font-family:'Poppins';
-font-size:20px;
-margin-bottom:30px;
-}
-
-.nav-item{
-display:flex;
-align-items:center;
-gap:10px;
-padding:10px;
-border-radius:10px;
-cursor:pointer;
-color:var(--muted);
-border:1px solid transparent;
-margin-bottom:5px;
-background:none;
-}
-
-.nav-item:hover{
-background:var(--surface2);
-}
-
-.nav-item.active{
-background:#f3f0ff;
-color:var(--accent);
-border-color:#e9e6ff;
-}
-
-.badge-count{
-margin-left:auto;
-background:#f3f0ff;
-padding:2px 7px;
-border-radius:8px;
-font-size:11px;
-}
-
-.sidebar-footer{
-margin-top:auto;
-}
-
-.user-chip{
-display:flex;
-align-items:center;
-gap:10px;
-padding:10px;
-border-radius:10px;
-background:var(--surface2);
-border:1px solid var(--border);
-}
-
-.user-avatar{
-width:34px;
-height:34px;
-border-radius:8px;
-background:var(--accent);
-display:flex;
-align-items:center;
-justify-content:center;
-color:white;
-font-weight:700;
-}
-
-.role-pill{
-font-size:11px;
-padding:2px 6px;
-border-radius:6px;
-background:#f3f0ff;
-}
-
-/* MAIN */
-
-.main-content{
-margin-left:var(--sidebar-w);
-padding:35px;
-height:100vh;
-overflow:auto;
-}
-
-.page-header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:20px;
-}
-
-.page-header h2{
-font-family:'Poppins';
-font-size:26px;
-}
-
-.card{
-background:var(--surface);
-border-radius:15px;
-padding:20px;
-border:1px solid var(--border);
-}
-
-/* TABLE */
-
-.table{
-width:100%;
-border-collapse:collapse;
-font-size:14px;
-}
-
-.table th{
-text-align:left;
-padding:10px;
-border-bottom:1px solid var(--border);
-font-size:12px;
-color:var(--muted);
-}
-
-.table td{
-padding:12px 10px;
-border-bottom:1px solid var(--border);
-}
-
-.task-title{
-font-weight:600;
-}
-
-.task-desc{
-font-size:12px;
-color:var(--muted);
-}
-
-.badge{
-padding:4px 10px;
-border-radius:10px;
-font-size:12px;
-}
-
-.badge-TODO{
-background:#f2f2f7;
-}
-
-.badge-IN_PROGRESS{
-background:#e6f0ff;
-color:#507cff;
-}
-
-.badge-DONE{
-background:#e8fff4;
-color:#23a56f;
-}
-
-.badge-low{
-background:#f4f4f4;
-}
-
-.badge-medium{
-background:#fff2d7;
-}
-
-.badge-high{
-background:#ffe5e9;
-color:#ff4f6d;
-}
-
-/* MODAL */
-
-.modal-backdrop{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,0.4);
-display:flex;
-align-items:center;
-justify-content:center;
-}
-
-.modal{
-width:450px;
-background:white;
-padding:25px;
-border-radius:15px;
-border:1px solid var(--border);
-}
-
-.modal-header{
-display:flex;
-justify-content:space-between;
-margin-bottom:15px;
-}
-
-.modal-footer{
-display:flex;
-gap:10px;
-justify-content:flex-end;
-margin-top:15px;
-}
-
-textarea{
-resize:none;
-}
-
-/* TOAST */
-
-.toast{
-position:fixed;
-bottom:20px;
-right:20px;
-background:white;
-padding:10px 15px;
-border-radius:10px;
-border:1px solid var(--border);
-box-shadow:0 5px 20px rgba(0,0,0,0.08);
-}
-
-</style>
-</head>
-
-<body>
-
-<!-- AUTH PAGE -->
-
-<div id="auth-page">
-
-<div class="auth-box">
-
-<div class="auth-title">🌸 Task Board</div>
-
-<div class="auth-subtitle">
-Final Lab Login
-</div>
-
-<div id="login-form">
-
-<div class="form-group">
-<label>Email</label>
-<input id="login-email" class="input" type="email" value="alice@lab.local">
-</div>
-
-<div class="form-group">
-<label>Password</label>
-<input id="login-password" class="input" type="password" value="alice123">
-</div>
-
-<button class="btn btn-primary" onclick="doLogin()">
-Login
-</button>
-
-</div>
-
-<div id="auth-msg"></div>
-
-<div class="auth-hint">
-<b>Seed Users</b><br>
-alice@lab.local / alice123<br>
-bob@lab.local / bob456<br>
-admin@lab.local / adminpass
-</div>
-
-</div>
-
-</div>
-
-<!-- APP PAGE -->
-
-<div id="app-page" class="hidden">
-
-<nav class="sidebar">
-
-<div class="sidebar-logo">
-📋 TaskBoard
-</div>
-
-<button class="nav-item active" data-page="tasks" onclick="showPage('tasks')">
-Tasks
-<span class="badge-count" id="task-count">0</span>
-</button>
-
-<button class="nav-item" data-page="profile" onclick="showPage('profile')">
-Profile
-</button>
-
-<a href="logs.html" class="nav-item">
-Logs
-</a>
-
-<div class="sidebar-footer">
-
-<div class="user-chip">
-<div class="user-avatar" id="sidebar-avatar">?</div>
-
-<div>
-<div id="sidebar-name">—</div>
-<span class="role-pill" id="sidebar-role-badge">—</span>
-</div>
-
-</div>
-
-</div>
-
-</nav>
-
-<div class="main-content">
-
-<div id="page-tasks">
-
-<div class="page-header">
-<h2>Task Board</h2>
-
-<button class="btn btn-primary" onclick="openTaskModal()">
-+ Create Task
-</button>
-
-</div>
-
-<div class="card">
-
-<table class="table">
-
-<thead>
-<tr>
-<th>Title</th>
-<th>Status</th>
-<th>Priority</th>
-<th>Owner</th>
-<th>Updated</th>
-<th></th>
-</tr>
-</thead>
-
-<tbody id="tasks-body">
-</tbody>
-
-</table>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<script>
-
-const API=''
-
-let token=localStorage.getItem('jwt_token')
-
-let currentUser=null
-
-function doLogin(){
-alert("เชื่อม API เหมือนเดิม")
-}
-
-</script>
-
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🔐 Task Board — Final Lab</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #fff0f6;
+        --surface: #ffe4ec;
+        --surface2: #ffd6e7;
+        --border: #f9a8c0;
+        --text: #7a284b;
+        --muted: #c08497;
+
+        --blue: #ec4899; /* เปลี่ยน primary เป็นชมพู */
+        --green: #f472b6; /* ชมพูอ่อน */
+        --yellow: #f9a8d4;
+        --red: #db2777;
+        --purple: #f472b6;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        background: linear-gradient(
+          135deg,
+          #ffe4ec 0%,
+          #ffd6e7 50%,
+          #ffc0cb 100%
+        );
+        color: var(--text);
+        overflow: hidden;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      /* Auth */
+      #auth-page {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        padding: 2rem;
+      }
+
+      .auth-box {
+        width: min(440px, 100%);
+        background: rgba(15, 23, 42, 0.92);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        border-radius: 1rem;
+        padding: 2.5rem 2.2rem;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+      }
+
+      .auth-logo {
+        font-size: 2.6rem;
+        text-align: center;
+        margin-bottom: 0.6rem;
+      }
+
+      .auth-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        text-align: center;
+      }
+
+      .auth-subtitle {
+        font-size: 0.9rem;
+        text-align: center;
+        color: var(--muted);
+        margin-bottom: 1.5rem;
+      }
+
+      .form-group {
+        margin-bottom: 1rem;
+      }
+
+      .form-group label {
+        display: block;
+        font-size: 0.85rem;
+        margin-bottom: 0.35rem;
+        color: var(--muted);
+      }
+
+      .form-group input,
+      .form-group textarea,
+      .form-group select {
+        width: 100%;
+        padding: 0.7rem 0.9rem;
+        border-radius: 0.6rem;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        background: rgba(15, 23, 42, 0.7);
+        color: var(--text);
+        font-size: 0.95rem;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        border-radius: 0.7rem;
+        border: none;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 0.95rem;
+        transition:
+          transform 0.1s ease,
+          box-shadow 0.1s ease;
+      }
+
+      .btn:active {
+        transform: translateY(1px);
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #f472b6, #ec4899);
+        color: white;
+        width: 100%;
+      }
+
+      .btn-secondary {
+        background: rgba(15, 23, 42, 0.7);
+        color: var(--text);
+        border: 1px solid rgba(148, 163, 184, 0.3);
+      }
+
+      .auth-msg {
+        margin-top: 1rem;
+        padding: 0.75rem 1rem;
+        border-radius: 0.75rem;
+        font-size: 0.9rem;
+      }
+
+      .auth-msg.error {
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+      }
+
+      .auth-msg.success {
+        background: rgba(34, 197, 94, 0.15);
+        color: #4ade80;
+      }
+
+      .auth-hint {
+        margin-top: 1rem;
+        padding: 0.75rem;
+        background: rgba(59, 130, 246, 0.1);
+        border-radius: 0.5rem;
+        font-size: 0.82rem;
+      }
+
+      /* Layout */
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 260px;
+        background: rgba(15, 23, 42, 0.95);
+        border-right: 1px solid rgba(52, 65, 85, 0.6);
+        display: flex;
+        flex-direction: column;
+        padding: 1.25rem 1rem;
+      }
+
+      .sidebar-logo {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 1.25rem;
+        letter-spacing: 0.03em;
+      }
+
+      .sidebar-nav {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.75rem 1rem;
+        border-radius: 0.75rem;
+        border: 1px solid transparent;
+        background: rgba(15, 23, 42, 0.55);
+        color: var(--text);
+        cursor: pointer;
+        transition:
+          background 0.15s ease,
+          border 0.15s ease;
+        font-weight: 600;
+      }
+
+      .nav-item:hover {
+        background: rgba(59, 130, 246, 0.15);
+      }
+
+      .nav-item.active {
+        background: rgba(59, 130, 246, 0.25);
+        border-color: rgba(59, 130, 246, 0.4);
+      }
+
+      .nav-icon {
+        font-size: 1rem;
+      }
+
+      .badge-count {
+        margin-left: auto;
+        background: rgba(148, 163, 184, 0.2);
+        padding: 0.15rem 0.55rem;
+        border-radius: 0.6rem;
+        font-size: 0.75rem;
+      }
+
+      .sidebar-footer {
+        margin-top: 1.5rem;
+      }
+
+      .user-chip {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border-radius: 1rem;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(52, 65, 85, 0.6);
+      }
+
+      .user-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: rgba(59, 130, 246, 0.25);
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 1rem;
+      }
+
+      .user-info-small {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+      }
+
+      .user-info-small .name {
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
+      .role-badge {
+        font-size: 0.7rem;
+        padding: 0.15rem 0.5rem;
+        border-radius: 0.75rem;
+        background: rgba(148, 163, 184, 0.2);
+      }
+
+      .role-member {
+        background: rgba(34, 197, 94, 0.15);
+        color: #4ade80;
+      }
+
+      .role-admin {
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+      }
+
+      .btn-logout {
+        margin-left: auto;
+        background: rgba(220, 38, 38, 0.25);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        color: #f87171;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+      }
+
+      .main-content {
+        margin-left: 280px;
+        height: 100vh;
+        overflow: auto;
+        padding: 2rem 2.5rem;
+      }
+
+      .page-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .page-title h2 {
+        font-size: 1.35rem;
+        letter-spacing: -0.01em;
+      }
+
+      .card {
+        background: rgba(15, 23, 42, 0.85);
+        border: 1px solid rgba(52, 65, 85, 0.6);
+        border-radius: 1rem;
+        padding: 1.25rem;
+      }
+
+      .card + .card {
+        margin-top: 1rem;
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+        font-size: 0.92rem;
+      }
+
+      .table th,
+      .table td {
+        text-align: left;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(52, 65, 85, 0.6);
+      }
+
+      .table th {
+        color: var(--muted);
+        letter-spacing: 0.05em;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+      }
+
+      .table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+      }
+
+      .badge-TODO {
+        background: rgba(148, 163, 184, 0.15);
+        color: var(--muted);
+      }
+
+      .badge-IN_PROGRESS {
+        background: rgba(59, 130, 246, 0.15);
+        color: var(--blue);
+      }
+
+      .badge-DONE {
+        background: rgba(34, 197, 94, 0.15);
+        color: var(--green);
+      }
+
+      .badge-low {
+        background: rgba(148, 163, 184, 0.15);
+        color: var(--muted);
+      }
+
+      .badge-medium {
+        background: rgba(59, 130, 246, 0.15);
+        color: var(--blue);
+      }
+
+      .badge-high {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--red);
+      }
+
+      .input {
+        width: 100%;
+        padding: 0.65rem 0.75rem;
+        border-radius: 0.7rem;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        background: rgba(15, 23, 42, 0.7);
+        color: var(--text);
+      }
+
+      .input:focus {
+        outline: 2px solid rgba(59, 130, 246, 0.35);
+      }
+
+      .flex {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .flex-between {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        background: rgba(15, 23, 42, 0.92);
+        border: 1px solid rgba(59, 130, 246, 0.35);
+        padding: 0.85rem 1rem;
+        border-radius: 0.85rem;
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
+        color: var(--text);
+        font-weight: 600;
+        animation: slideIn 0.25s ease;
+      }
+
+      .toast.success {
+        border-color: rgba(34, 197, 94, 0.45);
+      }
+
+      .toast.error {
+        border-color: rgba(239, 68, 68, 0.45);
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateY(8px);
+          opacity: 0;
+        }
+
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      /* Modal */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+      }
+
+      .modal {
+        width: min(520px, 95vw);
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid rgba(52, 65, 85, 0.75);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+
+      .modal-header h3 {
+        font-size: 1.1rem;
+      }
+
+      .modal-close {
+        background: transparent;
+        border: none;
+        color: var(--muted);
+        font-size: 1.3rem;
+        cursor: pointer;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+
+      .form-grid.full {
+        grid-template-columns: 1fr;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- ════ AUTH PAGE ════ -->
+    <div id="auth-page">
+      <div class="auth-box">
+        <div class="auth-logo">🔐</div>
+        <div class="auth-title">Task Board</div>
+        <div class="auth-subtitle">Final Lab — Security Architecture</div>
+
+        <div id="login-form">
+          <div class="form-group">
+            <label>Email</label>
+            <input
+              id="login-email"
+              class="input"
+              type="email"
+              value="alice@lab.local"
+              placeholder="you@lab.local"
+            />
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input
+              id="login-password"
+              class="input"
+              type="password"
+              value="alice123"
+              placeholder="password"
+            />
+          </div>
+          <button class="btn btn-primary" onclick="doLogin()">
+            เข้าสู่ระบบ
+          </button>
+        </div>
+
+        <div id="auth-msg"></div>
+
+        <div class="auth-hint">
+          <strong>🔑 Seed Users:</strong><br />
+          alice@lab.local / alice123 (member)<br />
+          bob@lab.local / bob456 (member)<br />
+          admin@lab.local / adminpass (admin)
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ MAIN APP ════ -->
+    <div id="app-page" class="hidden">
+      <nav class="sidebar">
+        <div class="sidebar-logo">📋 Task Board</div>
+        <div class="sidebar-nav">
+          <button
+            class="nav-item active"
+            data-page="tasks"
+            onclick="showPage('tasks')"
+          >
+            <span class="nav-icon">✅</span> Tasks
+            <span class="badge-count" id="task-count">0</span>
+          </button>
+          <button
+            class="nav-item"
+            data-page="profile"
+            onclick="showPage('profile')"
+          >
+            <span class="nav-icon">👤</span> Profile & JWT
+          </button>
+          <a
+            href="logs.html"
+            target="_blank"
+            class="nav-item"
+            style="text-decoration: none"
+          >
+            <span class="nav-icon">📊</span> Log Dashboard
+            <span
+              style="margin-left: auto; font-size: 0.7rem; color: var(--muted)"
+              >↗</span
+            >
+          </a>
+        </div>
+        <div class="sidebar-footer">
+          <div class="user-chip">
+            <div class="user-avatar" id="sidebar-avatar">?</div>
+            <div class="user-info-small">
+              <div class="name" id="sidebar-name">—</div>
+              <span class="role-badge" id="sidebar-role-badge">—</span>
+            </div>
+            <button class="btn-logout" onclick="doLogout()" title="Logout">
+              ✕
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <div class="main-content">
+        <div id="page-tasks">
+          <div class="page-title">
+            <h2>Task Board</h2>
+            <button class="btn btn-primary" onclick="openTaskModal()">
+              + สร้าง Task
+            </button>
+          </div>
+          <div class="card">
+            <div
+              class="flex-between"
+              style="margin-bottom: 1rem; gap: 1rem; flex-wrap: wrap"
+            >
+              <div class="flex" style="gap: 0.75rem">
+                <select
+                  id="filter-status"
+                  class="input"
+                  style="max-width: 160px"
+                  onchange="loadTasks()"
+                >
+                  <option value="">Status: ทั้งหมด</option>
+                  <option value="TODO">TODO</option>
+                  <option value="IN_PROGRESS">IN_PROGRESS</option>
+                  <option value="DONE">DONE</option>
+                </select>
+                <select
+                  id="filter-priority"
+                  class="input"
+                  style="max-width: 160px"
+                  onchange="loadTasks()"
+                >
+                  <option value="">Priority: ทั้งหมด</option>
+                  <option value="low">low</option>
+                  <option value="medium">medium</option>
+                  <option value="high">high</option>
+                </select>
+              </div>
+              <div style="font-size: 0.85rem; color: var(--muted)">
+                Logged in as <strong id="user-badge">—</strong>
+              </div>
+            </div>
+
+            <div id="tasks-table-container">
+              <table class="table" id="tasks-table">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Priority</th>
+                    <th>Owner</th>
+                    <th>Updated</th>
+                    <th style="text-align: right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="tasks-body">
+                  <tr>
+                    <td
+                      colspan="6"
+                      style="text-align: center; color: var(--muted)"
+                    >
+                      ⏳ Loading...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="page-profile" class="hidden">
+          <div class="page-title">
+            <h2>Profile & JWT Inspector</h2>
+            <button class="btn btn-secondary" onclick="doLogout()">
+              Logout
+            </button>
+          </div>
+          <div class="card">
+            <h3 style="margin-bottom: 0.75rem">User Info</h3>
+            <div
+              class="flex"
+              style="gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem"
+            >
+              <div style="flex: 1; min-width: 240px">
+                <div><strong>Username</strong></div>
+                <div id="profile-username" style="color: var(--muted)"></div>
+              </div>
+              <div style="flex: 1; min-width: 240px">
+                <div><strong>Email</strong></div>
+                <div id="profile-email" style="color: var(--muted)"></div>
+              </div>
+              <div style="flex: 1; min-width: 240px">
+                <div><strong>Role</strong></div>
+                <div id="profile-role" style="color: var(--muted)"></div>
+              </div>
+            </div>
+            <h3 style="margin-bottom: 0.75rem">JWT Token</h3>
+            <div class="card" style="background: rgba(15, 23, 42, 0.6)">
+              <div
+                style="
+                  font-size: 0.85rem;
+                  word-break: break-all;
+                  color: var(--muted);
+                "
+              >
+                Token stored in localStorage under <code>jwt_token</code>.
+              </div>
+              <pre
+                id="jwt-token"
+                style="
+                  margin-top: 0.75rem;
+                  overflow-x: auto;
+                  font-size: 0.8rem;
+                  padding: 0.75rem;
+                  background: rgba(0, 0, 0, 0.2);
+                  border-radius: 0.75rem;
+                "
+              >
+—</pre
+              >
+            </div>
+            <h3 style="margin-top: 1.5rem; margin-bottom: 0.75rem">
+              Decoded JWT Payload
+            </h3>
+            <div class="card" style="background: rgba(15, 23, 42, 0.6)">
+              <pre
+                id="jwt-payload"
+                style="
+                  margin: 0;
+                  overflow-x: auto;
+                  font-size: 0.8rem;
+                  padding: 0.75rem;
+                "
+              >
+—</pre
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-backdrop" class="modal-backdrop hidden">
+      <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-header">
+          <h3 id="modal-title">Create Task</h3>
+          <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Title</label>
+            <input
+              id="task-title"
+              class="input"
+              type="text"
+              placeholder="Task title"
+            />
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea
+              id="task-desc"
+              class="input"
+              rows="4"
+              placeholder="Optional"
+            ></textarea>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Status</label>
+              <select id="task-status" class="input">
+                <option value="TODO">TODO</option>
+                <option value="IN_PROGRESS">IN_PROGRESS</option>
+                <option value="DONE">DONE</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Priority</label>
+              <select id="task-priority" class="input">
+                <option value="low">low</option>
+                <option value="medium" selected>medium</option>
+                <option value="high">high</option>
+              </select>
+            </div>
+          </div>
+          <div
+            style="
+              margin-top: 1rem;
+              display: flex;
+              gap: 0.75rem;
+              justify-content: flex-end;
+            "
+          >
+            <button class="btn btn-secondary" onclick="closeModal()">
+              Cancel
+            </button>
+            <button
+              class="btn btn-primary"
+              onclick="submitTask()"
+              id="modal-submit"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
+
+    <script>
+      const API = "";
+      let token = localStorage.getItem("jwt_token");
+      let currentUser = null;
+      let allTasks = [];
+      let editingTaskId = null;
+
+      function setToast(message, type = "success") {
+        const t = document.getElementById("toast");
+        t.textContent = message;
+        t.className = `toast ${type}`;
+        t.classList.remove("hidden");
+        clearTimeout(t._timeout);
+        t._timeout = setTimeout(() => t.classList.add("hidden"), 3500);
+      }
+
+      function getAuthHeaders() {
+        return token
+          ? {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            }
+          : { "Content-Type": "application/json" };
+      }
+
+      async function api(path, opts = {}) {
+        const res = await fetch(`${API}${path}`, {
+          ...opts,
+          headers: { ...(opts.headers || {}), ...getAuthHeaders() },
+        });
+        if (res.status === 401) {
+          doLogout();
+          throw new Error("Unauthorized");
+        }
+        return res;
+      }
+
+      async function doLogin() {
+        const email = document.getElementById("login-email").value.trim();
+        const password = document.getElementById("login-password").value;
+        if (!email || !password) {
+          showAuthMsg("กรุณากรอกข้อมูลให้ครบ", "error");
+          return;
+        }
+
+        const res = await fetch(`${API}/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          token = data.token;
+          localStorage.setItem("jwt_token", token);
+          initApp(data.user);
+        } else {
+          showAuthMsg("❌ " + (data.error || "Login ล้มเหลว"), "error");
+        }
+      }
+
+      function showAuthMsg(msg, type) {
+        const el = document.getElementById("auth-msg");
+        el.className = `auth-msg ${type}`;
+        el.textContent = msg;
+      }
+
+      function doLogout() {
+        localStorage.removeItem("jwt_token");
+        token = null;
+        currentUser = null;
+        allTasks = [];
+        document.getElementById("app-page").classList.add("hidden");
+        document.getElementById("auth-page").classList.remove("hidden");
+      }
+
+      function decodeJwt(token) {
+        try {
+          const payload = token.split(".")[1];
+          const json = JSON.parse(
+            decodeURIComponent(
+              atob(payload)
+                .split("")
+                .map(
+                  (c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2),
+                )
+                .join(""),
+            ),
+          );
+          return json;
+        } catch {
+          return null;
+        }
+      }
+
+      async function initApp(user) {
+        currentUser = user;
+        document.getElementById("auth-page").classList.add("hidden");
+        document.getElementById("app-page").classList.remove("hidden");
+        const initials = (user.username || user.email || "?")
+          .charAt(0)
+          .toUpperCase();
+        document.getElementById("sidebar-avatar").textContent = initials;
+        document.getElementById("sidebar-name").textContent =
+          user.username || user.email;
+        const rb = document.getElementById("sidebar-role-badge");
+        rb.textContent = user.role;
+        rb.className = `role-badge role-${user.role}`;
+        document.getElementById("user-badge").textContent =
+          `${user.username} (${user.role})`;
+        showPage("tasks");
+      }
+
+      function showPage(page) {
+        ["tasks", "profile"].forEach((p) => {
+          document
+            .getElementById(`page-${p}`)
+            .classList.toggle("hidden", p !== page);
+          const btn = document.querySelector(`[data-page="${p}"]`);
+          if (btn) btn.classList.toggle("active", p === page);
+        });
+        if (page === "tasks") loadTasks();
+        if (page === "profile") loadProfile();
+      }
+
+      async function loadTasks() {
+        const status = document.getElementById("filter-status").value;
+        const priority = document.getElementById("filter-priority").value;
+        const query = new URLSearchParams();
+        if (status) query.set("status", status);
+        if (priority) query.set("priority", priority);
+        const res = await api(`/api/tasks/?${query.toString()}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        allTasks = data.tasks || [];
+        renderTasks(allTasks);
+        document.getElementById("task-count").textContent = allTasks.length;
+      }
+
+      function renderTasks(tasks) {
+        const tbody = document.getElementById("tasks-body");
+        if (!tasks.length) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);">📭 ยังไม่มี task</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = tasks
+          .map((task) => {
+            const statusBadge = `<span class="badge badge-${task.status}">${task.status}</span>`;
+            const prioBadge = `<span class="badge badge-${task.priority}">${task.priority}</span>`;
+            const updated = new Date(task.updated_at).toLocaleString("th-TH", {
+              dateStyle: "short",
+              timeStyle: "short",
+            });
+            const isOwner =
+              currentUser &&
+              (currentUser.id === task.user_id || currentUser.role === "admin");
+            const actions = isOwner
+              ? `<button class="btn btn-secondary" style="font-size:.75rem;" onclick="openTaskModal(${task.id})">Edit</button>\n       <button class="btn btn-secondary" style="font-size:.75rem;" onclick="confirmDelete(${task.id})">Delete</button>`
+              : "-";
+
+            return `
+      <tr>
+        <td><strong>${escHtml(task.title)}</strong><br><span style="color:var(--muted);font-size:.85rem">${escHtml(task.description || "")}</span></td>
+        <td>${statusBadge}</td>
+        <td>${prioBadge}</td>
+        <td>${escHtml(task.username || task.user_id)}</td>
+        <td>${escHtml(updated)}</td>
+        <td style="text-align:right; gap:.5rem; display:flex; justify-content:flex-end;">${actions}</td>
+      </tr>`;
+          })
+          .join("");
+      }
+
+      function escHtml(s) {
+        return String(s || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      function openTaskModal(taskId = null) {
+        editingTaskId = taskId;
+        const modal = document.getElementById("modal-backdrop");
+        const titleEl = document.getElementById("modal-title");
+        const submitBtn = document.getElementById("modal-submit");
+
+        if (!taskId) {
+          titleEl.textContent = "Create Task";
+          document.getElementById("task-title").value = "";
+          document.getElementById("task-desc").value = "";
+          document.getElementById("task-status").value = "TODO";
+          document.getElementById("task-priority").value = "medium";
+          submitBtn.textContent = "Create";
+        } else {
+          const task = allTasks.find((t) => t.id === taskId);
+          if (!task) return;
+          titleEl.textContent = "Edit Task";
+          document.getElementById("task-title").value = task.title || "";
+          document.getElementById("task-desc").value = task.description || "";
+          document.getElementById("task-status").value = task.status || "TODO";
+          document.getElementById("task-priority").value =
+            task.priority || "medium";
+          submitBtn.textContent = "Save";
+        }
+
+        modal.classList.remove("hidden");
+      }
+
+      function closeModal() {
+        document.getElementById("modal-backdrop").classList.add("hidden");
+        editingTaskId = null;
+      }
+
+      async function submitTask() {
+        const title = document.getElementById("task-title").value.trim();
+        const description = document.getElementById("task-desc").value.trim();
+        const status = document.getElementById("task-status").value;
+        const priority = document.getElementById("task-priority").value;
+
+        if (!title) {
+          setToast("Title is required", "error");
+          return;
+        }
+
+        try {
+          if (editingTaskId) {
+            const res = await api(`/api/tasks/${editingTaskId}`, {
+              method: "PUT",
+              body: JSON.stringify({ title, description, status, priority }),
+            });
+            if (!res.ok) throw new Error("Update failed");
+            setToast("Task updated");
+          } else {
+            const res = await api("/api/tasks/", {
+              method: "POST",
+              body: JSON.stringify({ title, description, status, priority }),
+            });
+            if (!res.ok) throw new Error("Create failed");
+            setToast("Task created");
+          }
+          closeModal();
+          loadTasks();
+        } catch (err) {
+          setToast(err.message || "Server error", "error");
+        }
+      }
+
+      async function confirmDelete(id) {
+        if (!confirm("ยืนยันการลบ task?")) return;
+        try {
+          const res = await api(`/api/tasks/${id}`, { method: "DELETE" });
+          if (!res.ok) throw new Error("Delete failed");
+          setToast("Task deleted");
+          loadTasks();
+        } catch (err) {
+          setToast(err.message || "Server error", "error");
+        }
+      }
+
+      async function loadProfile() {
+        try {
+          const res = await api("/api/auth/me");
+          if (!res.ok) return;
+          const data = await res.json();
+          const user = data.user || {};
+          document.getElementById("profile-username").textContent =
+            user.username || "—";
+          document.getElementById("profile-email").textContent =
+            user.email || "—";
+          document.getElementById("profile-role").textContent =
+            user.role || "—";
+
+          document.getElementById("jwt-token").textContent = token || "—";
+          const payload = decodeJwt(token);
+          document.getElementById("jwt-payload").textContent = payload
+            ? JSON.stringify(payload, null, 2)
+            : "Invalid token";
+        } catch (err) {
+          // ignore
+        }
+      }
+
+      // Auto-login
+      if (token) {
+        (async () => {
+          try {
+            const res = await fetch(`${API}/api/auth/verify`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            if (data.valid) {
+              initApp(data.user);
+            } else {
+              localStorage.removeItem("jwt_token");
+              token = null;
+            }
+          } catch (e) {
+            localStorage.removeItem("jwt_token");
+            token = null;
+          }
+        })();
+      }
+    </script>
+  </body>
 </html>
