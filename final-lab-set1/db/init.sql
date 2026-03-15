@@ -65,9 +65,13 @@ CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at DESC);
 -- ═══════════════════════════════════════════════
 
 INSERT INTO users (username, email, password_hash, role) VALUES
-  ('alice', 'alice@lab.local', '$2b$10$REPLACE_WITH_HASH_FOR_alice123', 'member'),
-  ('bob',   'bob@lab.local',   '$2b$10$REPLACE_WITH_HASH_FOR_bob456',   'member'),
-  ('admin', 'admin@lab.local', '$2b$10$REPLACE_WITH_HASH_FOR_adminpass','admin');
+  ('alice', 'alice@lab.local', '$2b$10$vGXLq0pXrjprB5K7c5YDaej6qiKMT.4YDGmGFTJUK3NzvvXyaeBPW', 'member'),
+  ('bob',   'bob@lab.local',   '$2b$10$PDrPAgykkS6Ykwy5T8L.lOsOx3XKDFOd.hbsJedgpzUJ5OcoOecea',   'member'),
+  ('admin', 'admin@lab.local', '$2b$10$q83p3UY5vToHR0h6GnIs9uBfyTCR/SIzS9m.iM/wQydXQRTOk0L42','admin')
+ON CONFLICT (username) DO UPDATE SET
+  email = EXCLUDED.email,
+  password_hash = EXCLUDED.password_hash,
+  role = EXCLUDED.role;
 
 -- Seed tasks (optional — ให้มีข้อมูลตั้งต้น)
 INSERT INTO tasks (user_id, title, description, status, priority)
