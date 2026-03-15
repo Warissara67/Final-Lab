@@ -67,11 +67,7 @@ CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at DESC);
 INSERT INTO users (username, email, password_hash, role) VALUES
   ('alice', 'alice@lab.local', '$2b$10$REPLACE_WITH_HASH_FOR_alice123', 'member'),
   ('bob',   'bob@lab.local',   '$2b$10$REPLACE_WITH_HASH_FOR_bob456',   'member'),
-  ('admin', 'admin@lab.local', '$2b$10$REPLACE_WITH_HASH_FOR_adminpass','admin')
-ON CONFLICT (username) DO UPDATE SET
-  email = EXCLUDED.email,
-  password_hash = EXCLUDED.password_hash,
-  role = EXCLUDED.role;
+  ('admin', 'admin@lab.local', '$2b$10$REPLACE_WITH_HASH_FOR_adminpass','admin');
 
 -- Seed tasks (optional — ให้มีข้อมูลตั้งต้น)
 INSERT INTO tasks (user_id, title, description, status, priority)
