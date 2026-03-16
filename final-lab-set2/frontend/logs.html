@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log Dashboard — Final Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #fdf6f0;
+      --bg2:         #faf0f4;
+      --surface:     #fff8fb;
+      --surface2:    #fdeef5;
+      --border:      #f0d9e8;
+      --border2:     #e8c8d8;
+      --text:        #2d1f2a;
+      --muted:       #8f7080;
+      --faint:       #c9afc0;
+      --pink:        #e8789a;
+      --pink-dim:    rgba(232,120,154,.12);
+      --pink-deep:   #c9527a;
+      --rose:        #f4a0bc;
+      --rose-dim:    rgba(244,160,188,.15);
+      --petal:       #fbd4e4;
+      --plum:        #8b4c6e;
+      --plum-dim:    rgba(139,76,110,.1);
+      --green:       #7aaa8e;
+      --green-dim:   rgba(122,170,142,.13);
+      --gold:        #c8924a;
+      --gold-dim:    rgba(200,146,74,.13);
+      --red:         #d95f6a;
+      --red-dim:     rgba(217,95,106,.12);
+      --blue:        #6a8fc8;
+      --blue-dim:    rgba(106,143,200,.12);
+      --purple:      #a07ac8;
+      --purple-dim:  rgba(160,122,200,.12);
+      --radius:      12px;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 15% 20%, rgba(232,120,154,.06) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 60% at 85% 80%, rgba(244,160,188,.05) 0%, transparent 55%),
+        radial-gradient(ellipse 40% 40% at 60% 10%, rgba(251,212,228,.08) 0%, transparent 50%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── Floating petals ── */
+    .petal-layer { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+    .petal {
+      position: absolute; border-radius: 80% 0 80% 0; opacity: 0;
+      animation: fall linear infinite;
+    }
+    .petal:nth-child(1)  { left:5%;  width:6px; height:6px; background:#f4b8cc; animation-duration:12s; animation-delay:0s; }
+    .petal:nth-child(2)  { left:18%; width:8px; height:8px; background:#f0a0b8; animation-duration:15s; animation-delay:3s; }
+    .petal:nth-child(3)  { left:32%; width:5px; height:5px; background:#fbc8dc; animation-duration:11s; animation-delay:5s; }
+    .petal:nth-child(4)  { left:47%; width:7px; height:7px; background:#f4a8c0; animation-duration:14s; animation-delay:1s; }
+    .petal:nth-child(5)  { left:60%; width:6px; height:6px; background:#f8d0e4; animation-duration:16s; animation-delay:4s; }
+    .petal:nth-child(6)  { left:73%; width:8px; height:8px; background:#f0b0c8; animation-duration:10s; animation-delay:7s; }
+    .petal:nth-child(7)  { left:85%; width:5px; height:5px; background:#fbd8e8; animation-duration:13s; animation-delay:2s; }
+    .petal:nth-child(8)  { left:92%; width:7px; height:7px; background:#f4a0bc; animation-duration:17s; animation-delay:6s; }
+
+    @keyframes fall {
+      0%   { transform: translateY(-20px) rotate(0deg) translateX(0);   opacity: 0; }
+      10%  { opacity: .65; }
+      90%  { opacity: .3; }
+      100% { transform: translateY(110vh) rotate(540deg) translateX(40px); opacity: 0; }
+    }
+
+    /* ── LOGIN OVERLAY ── */
+    #login-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 110%, rgba(232,120,154,.1) 0%, transparent 70%),
+        var(--bg);
+    }
+
+    .login-box {
+      width: min(400px, 92vw);
+      background: rgba(255,248,251,.94);
+      border: 1px solid var(--border2);
+      border-radius: 22px;
+      padding: 2.25rem 2rem 2rem;
+      box-shadow: 0 24px 60px rgba(180,80,120,.12), inset 0 1px 0 rgba(255,255,255,.9);
+      backdrop-filter: blur(12px);
+      animation: fadeUp .5s cubic-bezier(.16,1,.3,1);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .login-kamon { text-align: center; font-size: 2rem; margin-bottom: .65rem; animation: sway 4s ease-in-out infinite; }
+    @keyframes sway { 0%,100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+
+    .login-eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem; letter-spacing: .18em; text-transform: uppercase;
+      color: var(--pink); text-align: center; margin-bottom: .4rem;
+    }
+
+    .login-title {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 1.85rem; letter-spacing: -.01em; line-height: 1.1;
+      text-align: center; color: var(--plum); margin-bottom: 1.5rem;
+    }
+
+    .form-group { margin-bottom: .9rem; }
+    .form-group label {
+      display: block;
+      font-family: 'DM Mono', monospace;
+      font-size: .67rem; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: .38rem;
+    }
+
+    .input {
+      width: 100%; padding: .68rem .9rem;
+      border-radius: var(--radius);
+      border: 1.5px solid var(--border2);
+      background: rgba(255,255,255,.8);
+      color: var(--text);
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      font-size: .9rem;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .input:focus { outline: none; border-color: var(--pink); box-shadow: 0 0 0 3px var(--pink-dim); }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+      padding: .65rem 1.1rem; border-radius: var(--radius);
+      border: none; cursor: pointer;
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      font-weight: 700; font-size: .88rem;
+      transition: all .2s ease;
+    }
+    .btn:active { transform: scale(.97); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--pink) 0%, var(--pink-deep) 100%);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(201,82,122,.22);
+    }
+    .btn-primary:hover { box-shadow: 0 6px 24px rgba(201,82,122,.32); transform: translateY(-1px); }
+
+    .btn-ghost {
+      background: transparent; color: var(--muted);
+      border: 1.5px solid var(--border2);
+    }
+    .btn-ghost:hover { color: var(--plum); border-color: var(--rose); background: var(--rose-dim); }
+
+    .btn-full { width: 100%; }
+    .btn-sm { font-size: .75rem; padding: .36rem .7rem; border-radius: 8px; }
+
+    .login-err { color: var(--red); font-size: .82rem; margin-top: .6rem; min-height: 1.2rem; }
+    .login-note { color: var(--muted); font-size: .74rem; margin-top: .75rem; text-align: center; }
+
+    /* ── HEADER ── */
+    .header {
+      position: relative; z-index: 10;
+      background: rgba(255,248,251,.95);
+      border-bottom: 1px solid var(--border);
+      padding: .8rem 2rem;
+      display: flex; justify-content: space-between; align-items: center;
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: blur(8px);
+    }
+
+    /* Sakura accent line */
+    .header::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(to right, transparent, var(--rose), var(--pink), var(--rose), transparent);
+      opacity: .5;
+    }
+
+    .header-left { display: flex; align-items: center; gap: .8rem; }
+
+    .logo-mark {
+      width: 30px; height: 30px;
+      background: linear-gradient(135deg, var(--rose), var(--pink));
+      border-radius: 8px;
+      display: grid; place-items: center;
+      font-size: .85rem; flex-shrink: 0;
+      box-shadow: 0 3px 10px var(--pink-dim);
+    }
+
+    .header-title { font-family: 'Noto Serif JP', serif; font-size: 1.05rem; color: var(--plum); }
+    .header-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: .58rem; letter-spacing: .1em; text-transform: uppercase; color: var(--faint);
+    }
+
+    .header-right { display: flex; gap: .6rem; align-items: center; }
+
+    .logged-as {
+      font-family: 'DM Mono', monospace; font-size: .7rem; color: var(--muted);
+      padding: .28rem .6rem;
+      background: var(--surface2); border: 1px solid var(--border2); border-radius: 6px;
+    }
+    .logged-as span { color: var(--plum); }
+
+    .refresh-toggle { display: flex; align-items: center; gap: .4rem; font-size: .78rem; padding: .32rem .7rem; }
+
+    .refresh-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green); animation: pulse 1.5s infinite;
+    }
+    .refresh-dot.paused { background: var(--faint); animation: none; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+
+    .back-link {
+      display: flex; align-items: center; gap: .35rem;
+      color: var(--muted); font-size: .82rem; text-decoration: none;
+      padding: .32rem .7rem; border-radius: 8px;
+      border: 1.5px solid var(--border2);
+      transition: all .15s;
+    }
+    .back-link:hover { color: var(--plum); border-color: var(--rose); background: var(--rose-dim); }
+
+    /* ── CONTAINER ── */
+    .container { position: relative; z-index: 2; max-width: 1400px; margin: 0 auto; padding: 1.75rem 2rem; }
+
+    /* ── STATS ── */
+    .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: .9rem; margin-bottom: 1.5rem; }
+
+    .stat-card {
+      background: rgba(255,248,251,.9);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem 1.1rem;
+      position: relative; overflow: hidden;
+      box-shadow: 0 2px 12px rgba(180,80,120,.04);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .stat-card:hover { border-color: var(--border2); box-shadow: 0 4px 20px rgba(180,80,120,.08); }
+
+    .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+    .stat-card.total::before { background: linear-gradient(to right, var(--blue),   var(--blue)); }
+    .stat-card.info::before  { background: linear-gradient(to right, var(--green),  var(--green)); }
+    .stat-card.warn::before  { background: linear-gradient(to right, var(--gold),   var(--gold)); }
+    .stat-card.error::before { background: linear-gradient(to right, var(--red),    var(--red)); }
+
+    /* Petal watermark */
+    .stat-card::after {
+      content: '🌸';
+      position: absolute; bottom: .4rem; right: .7rem;
+      font-size: 1.4rem; opacity: .07; pointer-events: none;
+    }
+
+    .stat-label {
+      font-family: 'DM Mono', monospace;
+      font-size: .6rem; letter-spacing: .13em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: .35rem;
+    }
+    .stat-value { font-family: 'Noto Serif JP', serif; font-size: 2.2rem; line-height: 1; font-weight: 400; }
+    .stat-card.total .stat-value { color: var(--blue); }
+    .stat-card.info  .stat-value { color: var(--green); }
+    .stat-card.warn  .stat-value { color: var(--gold); }
+    .stat-card.error .stat-value { color: var(--red); }
+
+    /* ── FILTER BAR ── */
+    .filter-bar {
+      display: flex; gap: .5rem; flex-wrap: wrap; align-items: center;
+      margin-bottom: 1rem;
+      padding: .8rem 1rem;
+      background: rgba(255,248,251,.9);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 1px 8px rgba(180,80,120,.04);
+    }
+
+    .filter-search {
+      flex: 1; min-width: 200px;
+      padding: .52rem .85rem;
+      border-radius: 9px;
+      border: 1.5px solid var(--border2);
+      background: rgba(255,255,255,.8);
+      color: var(--text);
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      font-size: .84rem;
+    }
+    .filter-search:focus { outline: none; border-color: var(--pink); box-shadow: 0 0 0 3px var(--pink-dim); }
+    .filter-search::placeholder { color: var(--faint); }
+
+    .filter-select {
+      padding: .48rem .85rem;
+      border-radius: 9px;
+      border: 1.5px solid var(--border2);
+      background: rgba(255,255,255,.8);
+      color: var(--text);
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      font-size: .8rem; cursor: pointer; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23c9afc0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right .6rem center;
+      padding-right: 1.8rem;
+      transition: border-color .18s;
+    }
+    .filter-select:focus { outline: none; border-color: var(--pink); }
+
+    .filter-divider { width: 1px; height: 22px; background: var(--border2); margin: 0 .1rem; }
+
+    /* ── LOG TABLE ── */
+    .log-table {
+      background: rgba(255,248,251,.9);
+      border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+      box-shadow: 0 2px 16px rgba(180,80,120,.05);
+    }
+
+    .log-table-head {
+      display: grid;
+      grid-template-columns: 155px 110px 70px 160px 1fr;
+      gap: .75rem;
+      padding: .6rem 1.1rem;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+    }
+    .log-table-head span {
+      font-family: 'DM Mono', monospace;
+      font-size: .6rem; letter-spacing: .1em; text-transform: uppercase; color: var(--faint);
+    }
+
+    .log-row {
+      display: grid;
+      grid-template-columns: 155px 110px 70px 160px 1fr;
+      gap: .75rem;
+      padding: .68rem 1.1rem;
+      border-top: 1px solid var(--border);
+      font-size: .83rem; align-items: center;
+      transition: background .12s;
+    }
+    .log-row:hover { background: rgba(244,160,188,.07); }
+
+    .time-cell {
+      font-family: 'DM Mono', monospace; font-size: .7rem; color: var(--muted); white-space: nowrap;
+    }
+
+    .service-pill {
+      display: inline-flex; align-items: center; gap: .28rem;
+      padding: .16rem .52rem; border-radius: 5px;
+      background: var(--blue-dim); color: var(--blue);
+      font-family: 'DM Mono', monospace; font-size: .66rem; letter-spacing: .03em; white-space: nowrap;
+    }
+    .service-pill.task { background: var(--purple-dim); color: var(--purple); }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: .26rem;
+      padding: .16rem .52rem; border-radius: 5px;
+      font-family: 'DM Mono', monospace; font-size: .66rem; font-weight: 500;
+    }
+    .badge::before { content: '✿'; font-size: .52rem; }
+    .badge-INFO  { background: var(--green-dim); color: var(--green); }
+    .badge-WARN  { background: var(--gold-dim);  color: var(--gold); }
+    .badge-ERROR { background: var(--red-dim);   color: var(--red); }
+
+    .event-cell {
+      font-family: 'DM Mono', monospace; font-size: .7rem; color: var(--purple);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .msg-cell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .82rem; color: var(--text); }
+    .meta-text { color: var(--muted); font-size: .7rem; font-family: 'DM Mono', monospace; }
+
+    .empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+    .empty-state .empty-icon { font-size: 2rem; margin-bottom: .65rem; opacity: .5; }
+    .empty-state p { font-size: .88rem; }
+
+    .table-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: .6rem 1.1rem;
+      border-top: 1px solid var(--border);
+      font-family: 'DM Mono', monospace; font-size: .68rem; color: var(--muted);
+      background: var(--surface2);
+    }
+  </style>
+</head>
+<body>
+
+<div class="petal-layer" aria-hidden="true">
+  <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+  <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+  <div class="petal"></div><div class="petal"></div>
+</div>
+
+<!-- ═══ LOGIN OVERLAY ═══ -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-kamon">🌸</div>
+    <div class="login-eyebrow">Admin Access</div>
+    <div class="login-title">Log Dashboard</div>
+
+    <div class="form-group">
+      <label>Email</label>
+      <input id="l-email" class="input" type="email" value="admin@lab.local">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input id="l-pass" class="input" type="password" value="adminpass">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="dashLogin()" style="margin-top:.3rem;">เข้าสู่ระบบ 🌸</button>
+    <p id="l-err" class="login-err"></p>
+    <p class="login-note">ต้องใช้บัญชีที่มีสิทธิ์ admin เท่านั้น</p>
+  </div>
+</div>
+
+<!-- ═══ HEADER ═══ -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo-mark">📊</div>
+    <div>
+      <div class="header-title">Log Dashboard</div>
+      <div class="header-tag">Final Lab</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="logged-as" id="logged-as" style="display:none;">🌸 <span id="logged-name">—</span></div>
+    <button class="btn btn-ghost btn-sm refresh-toggle" onclick="toggleAutoRefresh()" id="refresh-btn">
+      <span class="refresh-dot" id="refresh-dot"></span>
+      <span id="refresh-label">Live</span>
+    </button>
+    <a href="index.html" class="back-link">← Task Board</a>
+  </div>
+</div>
+
+<!-- ═══ MAIN ═══ -->
+<div class="container">
+
+  <div class="stats-row">
+    <div class="stat-card total">
+      <div class="stat-label">Total Logs</div>
+      <div class="stat-value" id="stat-total">—</div>
+    </div>
+    <div class="stat-card info">
+      <div class="stat-label">INFO</div>
+      <div class="stat-value" id="stat-info">—</div>
+    </div>
+    <div class="stat-card warn">
+      <div class="stat-label">WARN</div>
+      <div class="stat-value" id="stat-warn">—</div>
+    </div>
+    <div class="stat-card error">
+      <div class="stat-label">ERROR</div>
+      <div class="stat-value" id="stat-error">—</div>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <input id="f-search" class="filter-search" type="text" placeholder="🌸 ค้นหา event / message / service...">
+    <div class="filter-divider"></div>
+    <select id="f-service" class="filter-select">
+      <option value="">Service: ทั้งหมด</option>
+      <option value="auth-service">auth-service</option>
+      <option value="task-service">task-service</option>
+    </select>
+    <select id="f-level" class="filter-select">
+      <option value="">Level: ทั้งหมด</option>
+      <option value="INFO">INFO</option>
+      <option value="WARN">WARN</option>
+      <option value="ERROR">ERROR</option>
+    </select>
+    <div class="filter-divider"></div>
+    <button class="btn btn-primary btn-sm" onclick="loadLogs()">↻ โหลดใหม่</button>
+    <button class="btn btn-ghost btn-sm" onclick="clearFilters()">✕ ล้าง</button>
+  </div>
+
+  <div class="log-table">
+    <div class="log-table-head">
+      <span>เวลา</span>
+      <span>Service</span>
+      <span>Level</span>
+      <span>Event</span>
+      <span>Message</span>
+    </div>
+    <div id="log-rows">
+      <div class="empty-state"><div class="empty-icon">🌸</div><p>กำลังโหลด...</p></div>
+    </div>
+    <div class="table-footer">
+      <span id="last-refresh">—</span>
+      <span id="row-count">—</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API = '';
+let token        = localStorage.getItem('jwt_token');
+let autoRefresh  = true;
+let refreshTimer = null;
+let allLogs      = [];
+
+async function dashLogin() {
+  const email    = document.getElementById('l-email').value.trim();
+  const password = document.getElementById('l-pass').value;
+  const res  = await fetch(`${API}/api/auth/login`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({email, password})
+  });
+  const data = await res.json();
+  if (res.ok) {
+    if (data.user.role !== 'admin') {
+      document.getElementById('l-err').textContent = 'หน้านี้สำหรับ admin เท่านั้น';
+      return;
+    }
+    token = data.token;
+    localStorage.setItem('jwt_token', token);
+    enterDashboard(data.user);
+  } else {
+    document.getElementById('l-err').textContent = data.error || 'Login ล้มเหลว';
+  }
+}
+
+function enterDashboard(user) {
+  document.getElementById('login-overlay').style.display = 'none';
+  const el = document.getElementById('logged-as');
+  el.style.display = 'flex';
+  document.getElementById('logged-name').textContent = `${user.username||user.email} (${user.role})`;
+  loadStats(); loadLogs(); startAutoRefresh();
+}
+
+function authHeaders() {
+  return {'Content-Type':'application/json', 'Authorization':`Bearer ${token}`};
+}
+
+async function loadStats() {
+  const res = await fetch(`${API}/api/logs/stats`, {headers: authHeaders()});
+  if (!res.ok) return;
+  const data = await res.json();
+  const total = data.by_level.reduce((s,r) => s + parseInt(r.count), 0);
+  document.getElementById('stat-total').textContent = total;
+  const find = l => { const r = data.by_level.find(r => r.level===l); return r ? r.count : 0; };
+  document.getElementById('stat-info').textContent  = find('INFO');
+  document.getElementById('stat-warn').textContent  = find('WARN');
+  document.getElementById('stat-error').textContent = find('ERROR');
+}
+
+async function loadLogs() {
+  const service = document.getElementById('f-service').value;
+  const level   = document.getElementById('f-level').value;
+  const search  = document.getElementById('f-search').value.trim();
+  const params  = new URLSearchParams({limit:200});
+  if (service) params.set('service', service);
+  if (level)   params.set('level', level);
+
+  const res = await fetch(`${API}/api/logs/?${params}`, {headers: authHeaders()});
+  if (res.status === 401) { document.getElementById('login-overlay').style.display='flex'; return; }
+  if (res.status === 403) {
+    document.getElementById('log-rows').innerHTML = '<div class="empty-state"><div class="empty-icon">⛔</div><p>หน้านี้สำหรับ admin เท่านั้น</p></div>';
+    return;
+  }
+  if (!res.ok) return;
+  const data = await res.json();
+  allLogs = data.logs || [];
+
+  let filtered = allLogs;
+  if (search) {
+    const q = search.toLowerCase();
+    filtered = allLogs.filter(l =>
+      (l.event||'').toLowerCase().includes(q) ||
+      (l.message||'').toLowerCase().includes(q) ||
+      (l.service||'').toLowerCase().includes(q)
+    );
+  }
+
+  renderLogs(filtered);
+  const now = new Date().toLocaleTimeString('th-TH');
+  document.getElementById('last-refresh').textContent = `✿ อัปเดตล่าสุด: ${now}`;
+  document.getElementById('row-count').textContent    = `แสดง ${filtered.length} / ${data.total} รายการ`;
+  loadStats();
+}
+
+function renderLogs(logs) {
+  const container = document.getElementById('log-rows');
+  if (!logs.length) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">🌸</div><p>ไม่พบ log ที่ตรงกับเงื่อนไข</p></div>';
+    return;
+  }
+  container.innerHTML = logs.map(log => {
+    const time = new Date(log.created_at).toLocaleString('th-TH', {dateStyle:'short', timeStyle:'medium'});
+    const isTask = (log.service||'').includes('task');
+    return `
+      <div class="log-row">
+        <div class="time-cell">${escHtml(time)}</div>
+        <div><span class="service-pill ${isTask?'task':''}">${escHtml(log.service)}</span></div>
+        <div><span class="badge badge-${log.level}">${log.level}</span></div>
+        <div class="event-cell" title="${escHtml(log.event)}">${escHtml(log.event)}</div>
+        <div class="msg-cell" title="${escHtml(log.message||'')}">
+          ${escHtml(log.message||'—')}${log.meta?`<span class="meta-text"> · ${escHtml(JSON.stringify(log.meta))}</span>`:''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function startAutoRefresh() {
+  if (refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = setInterval(() => { if (autoRefresh) loadLogs(); }, 5000);
+}
+
+function toggleAutoRefresh() {
+  autoRefresh = !autoRefresh;
+  document.getElementById('refresh-label').textContent = autoRefresh ? 'Live' : 'Paused';
+  document.getElementById('refresh-dot').className = autoRefresh ? 'refresh-dot' : 'refresh-dot paused';
+}
+
+function clearFilters() {
+  document.getElementById('f-service').value = '';
+  document.getElementById('f-level').value   = '';
+  document.getElementById('f-search').value  = '';
+  loadLogs();
+}
+
+if (token) {
+  (async () => {
+    const res = await fetch(`${API}/api/auth/verify`, {headers:{Authorization:`Bearer ${token}`}});
+    const data = await res.json();
+    if (data.valid && data.user.role==='admin') {
+      enterDashboard(data.user);
+    } else {
+      localStorage.removeItem('jwt_token'); token = null;
+      document.getElementById('l-err').textContent = 'หน้านี้สำหรับ admin เท่านั้น';
+    }
+  })();
+}
+</script>
+</body>
+</html>

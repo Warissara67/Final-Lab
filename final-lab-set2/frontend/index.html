@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Board — Final Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #fdf6f0;
+      --bg2:         #faf0f4;
+      --surface:     #fff8fb;
+      --surface2:    #fdeef5;
+      --border:      #f0d9e8;
+      --border2:     #e8c8d8;
+      --text:        #2d1f2a;
+      --muted:       #8f7080;
+      --faint:       #c9afc0;
+      --pink:        #e8789a;
+      --pink-dim:    rgba(232,120,154,.12);
+      --pink-deep:   #c9527a;
+      --rose:        #f4a0bc;
+      --rose-dim:    rgba(244,160,188,.15);
+      --petal:       #fbd4e4;
+      --plum:        #8b4c6e;
+      --plum-dim:    rgba(139,76,110,.1);
+      --green:       #7aaa8e;
+      --green-dim:   rgba(122,170,142,.13);
+      --gold:        #c8924a;
+      --gold-dim:    rgba(200,146,74,.13);
+      --red:         #d95f6a;
+      --red-dim:     rgba(217,95,106,.12);
+      --blue:        #6a8fc8;
+      --blue-dim:    rgba(106,143,200,.12);
+      --sidebar-w:   260px;
+      --radius:      12px;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    /* ── Petal particle background ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 15% 20%, rgba(232,120,154,.07) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 60% at 85% 80%, rgba(244,160,188,.06) 0%, transparent 55%),
+        radial-gradient(ellipse 40% 40% at 60% 10%, rgba(251,212,228,.1) 0%, transparent 50%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* Floating petals */
+    .petal-layer {
+      position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden;
+    }
+    .petal {
+      position: absolute;
+      width: 8px; height: 8px;
+      background: var(--rose);
+      border-radius: 80% 0 80% 0;
+      opacity: 0;
+      animation: fall linear infinite;
+    }
+    .petal:nth-child(1)  { left: 5%;  animation-duration: 12s; animation-delay: 0s;   width:6px; height:6px; background:#f4b8cc; }
+    .petal:nth-child(2)  { left: 15%; animation-duration: 15s; animation-delay: 2s;   width:9px; height:9px; background:#f0a0b8; }
+    .petal:nth-child(3)  { left: 28%; animation-duration: 11s; animation-delay: 4s;   width:5px; height:5px; background:#fbc8dc; }
+    .petal:nth-child(4)  { left: 40%; animation-duration: 14s; animation-delay: 1s;   width:7px; height:7px; background:#f4a8c0; }
+    .petal:nth-child(5)  { left: 55%; animation-duration: 16s; animation-delay: 3s;   width:6px; height:6px; background:#f8d0e4; }
+    .petal:nth-child(6)  { left: 68%; animation-duration: 10s; animation-delay: 6s;   width:8px; height:8px; background:#f0b0c8; }
+    .petal:nth-child(7)  { left: 78%; animation-duration: 13s; animation-delay: 0.5s; width:5px; height:5px; background:#fbd8e8; }
+    .petal:nth-child(8)  { left: 88%; animation-duration: 17s; animation-delay: 5s;   width:7px; height:7px; background:#f4a0bc; }
+    .petal:nth-child(9)  { left: 22%; animation-duration: 18s; animation-delay: 8s;   width:6px; height:6px; background:#f8c4d8; }
+    .petal:nth-child(10) { left: 50%; animation-duration: 12s; animation-delay: 7s;   width:9px; height:9px; background:#f0b8cc; }
+    .petal:nth-child(11) { left: 72%; animation-duration: 14s; animation-delay: 2.5s; width:5px; height:5px; background:#fbd4e4; }
+    .petal:nth-child(12) { left: 92%; animation-duration: 11s; animation-delay: 9s;   width:6px; height:6px; background:#f4bcd0; }
+
+    @keyframes fall {
+      0%   { transform: translateY(-20px) rotate(0deg) translateX(0);   opacity: 0; }
+      10%  { opacity: .7; }
+      90%  { opacity: .4; }
+      100% { transform: translateY(110vh) rotate(540deg) translateX(40px); opacity: 0; }
+    }
+
+    .hidden { display: none !important; }
+
+    /* ── AUTH ── */
+    #auth-page {
+      position: relative; z-index: 2;
+      display: flex; align-items: center; justify-content: center;
+      height: 100%;
+    }
+
+    .auth-box {
+      width: min(400px, 94vw);
+      background: rgba(255,248,251,.92);
+      border: 1px solid var(--border2);
+      border-radius: 22px;
+      padding: 2.5rem 2.25rem 2rem;
+      box-shadow:
+        0 24px 60px rgba(180,80,120,.1),
+        0 2px 0 rgba(255,255,255,.9) inset;
+      backdrop-filter: blur(12px);
+      animation: fadeUp .5s cubic-bezier(.16,1,.3,1);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .auth-kamon {
+      text-align: center; font-size: 2.2rem;
+      margin-bottom: .75rem;
+      animation: sway 4s ease-in-out infinite;
+    }
+    @keyframes sway {
+      0%,100% { transform: rotate(-3deg); }
+      50%      { transform: rotate(3deg); }
+    }
+
+    .auth-eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem; letter-spacing: .18em; text-transform: uppercase;
+      color: var(--pink);
+      text-align: center; margin-bottom: .4rem;
+    }
+
+    .auth-title {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 1.9rem; letter-spacing: -.01em; line-height: 1.1;
+      text-align: center; color: var(--plum);
+      margin-bottom: .3rem;
+    }
+
+    .auth-subtitle {
+      font-size: .8rem; color: var(--muted);
+      text-align: center; margin-bottom: 1.75rem;
+    }
+
+    .form-group { margin-bottom: 1rem; }
+    .form-group label {
+      display: block;
+      font-family: 'DM Mono', monospace;
+      font-size: .67rem; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: .38rem;
+    }
+
+    .input {
+      width: 100%;
+      padding: .68rem .9rem;
+      border-radius: var(--radius);
+      border: 1.5px solid var(--border2);
+      background: rgba(255,255,255,.8);
+      color: var(--text);
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      font-size: .9rem;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .input:focus {
+      outline: none;
+      border-color: var(--pink);
+      box-shadow: 0 0 0 3px var(--pink-dim);
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: .45rem;
+      padding: .72rem 1.25rem;
+      border-radius: var(--radius);
+      border: none; cursor: pointer;
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      font-weight: 700; font-size: .9rem;
+      transition: all .2s ease;
+    }
+    .btn:active { transform: scale(.97); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--pink) 0%, var(--pink-deep) 100%);
+      color: #fff;
+      width: 100%;
+      box-shadow: 0 4px 16px rgba(201,82,122,.25);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 6px 24px rgba(201,82,122,.35);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1.5px solid var(--border2);
+    }
+    .btn-secondary:hover { background: var(--petal); border-color: var(--rose); }
+
+    .btn-danger {
+      background: var(--red-dim);
+      color: var(--red);
+      border: 1.5px solid rgba(217,95,106,.2);
+    }
+    .btn-danger:hover { background: rgba(217,95,106,.2); }
+
+    .btn-sm { font-size: .75rem; padding: .36rem .7rem; border-radius: 8px; }
+
+    .auth-msg {
+      margin-top: 1rem; padding: .65rem .9rem;
+      border-radius: var(--radius); font-size: .83rem; font-weight: 500;
+    }
+    .auth-msg.error  { background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(217,95,106,.2); }
+    .auth-msg.success{ background: var(--green-dim); color: var(--green); border: 1px solid rgba(122,170,142,.2); }
+
+    .auth-hint {
+      margin-top: 1.25rem;
+      padding: .8rem 1rem;
+      background: rgba(232,120,154,.06);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      font-family: 'DM Mono', monospace;
+      font-size: .7rem; line-height: 1.9; color: var(--muted);
+    }
+    .auth-hint strong { color: var(--plum); display: block; margin-bottom: .3rem; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      position: fixed; left: 0; top: 0; bottom: 0;
+      width: var(--sidebar-w);
+      background: rgba(255,248,251,.95);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      padding: 1.5rem 1rem 1.25rem;
+      z-index: 10;
+      backdrop-filter: blur(8px);
+    }
+
+    /* Sakura branch decoration */
+    .sidebar::after {
+      content: '';
+      position: absolute; top: 0; right: 0;
+      width: 3px; height: 100%;
+      background: linear-gradient(to bottom, var(--rose), transparent 30%, transparent 70%, var(--petal));
+      opacity: .6;
+    }
+
+    .sidebar-logo {
+      display: flex; align-items: center; gap: .65rem;
+      margin-bottom: 2rem; padding: 0 .25rem;
+    }
+
+    .logo-mark {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--rose) 0%, var(--pink) 100%);
+      border-radius: 10px;
+      display: grid; place-items: center;
+      font-size: .95rem; flex-shrink: 0;
+      box-shadow: 0 4px 12px var(--pink-dim);
+    }
+
+    .logo-text {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 1.05rem; color: var(--plum);
+    }
+
+    .logo-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: .58rem; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--faint);
+    }
+
+    .nav-section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: .6rem; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--faint); margin: 0 .5rem .6rem;
+    }
+
+    .sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: .2rem; }
+
+    .nav-item {
+      display: flex; align-items: center; gap: .65rem;
+      padding: .62rem .85rem;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      font-weight: 500; font-size: .87rem;
+      transition: all .18s ease; text-decoration: none;
+    }
+    .nav-item:hover { background: var(--rose-dim); color: var(--plum); }
+    .nav-item.active {
+      background: linear-gradient(135deg, rgba(232,120,154,.12), rgba(251,212,228,.15));
+      border-color: rgba(232,120,154,.25);
+      color: var(--pink-deep);
+    }
+
+    .nav-icon {
+      width: 28px; height: 28px;
+      display: grid; place-items: center;
+      border-radius: 8px; font-size: .82rem;
+      background: var(--surface2); flex-shrink: 0;
+    }
+    .nav-item.active .nav-icon { background: var(--pink-dim); }
+
+    .badge-count {
+      margin-left: auto;
+      background: var(--surface2);
+      color: var(--muted);
+      padding: .1rem .5rem;
+      border-radius: 6px;
+      font-family: 'DM Mono', monospace; font-size: .67rem;
+      border: 1px solid var(--border);
+    }
+    .nav-item.active .badge-count {
+      background: var(--pink-dim); color: var(--pink-deep);
+      border-color: rgba(232,120,154,.25);
+    }
+
+    .ext-icon { margin-left: auto; font-size: .65rem; color: var(--faint); }
+
+    .sidebar-footer { margin-top: 1.5rem; }
+    .sidebar-divider { height: 1px; background: var(--border); margin: 1rem 0; }
+
+    .user-chip {
+      display: flex; align-items: center; gap: .65rem;
+      padding: .7rem .8rem;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--surface2), var(--petal));
+      border: 1px solid var(--border2);
+    }
+
+    .user-avatar {
+      width: 34px; height: 34px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--rose), var(--pink));
+      color: #fff;
+      display: grid; place-items: center;
+      font-weight: 800; font-size: .9rem; flex-shrink: 0;
+      box-shadow: 0 2px 8px var(--pink-dim);
+    }
+
+    .user-info-small { display: flex; flex-direction: column; gap: .05rem; flex: 1; min-width: 0; }
+    .user-info-small .name {
+      font-size: .82rem; font-weight: 600; color: var(--plum);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .role-pill {
+      display: inline-block;
+      font-family: 'DM Mono', monospace;
+      font-size: .6rem; letter-spacing: .06em; text-transform: uppercase;
+      padding: .1rem .45rem; border-radius: 4px;
+    }
+    .role-member { background: var(--green-dim);  color: var(--green); }
+    .role-admin  { background: var(--red-dim);     color: var(--red); }
+
+    .btn-logout {
+      width: 28px; height: 28px; border-radius: 6px;
+      background: transparent; border: 1.5px solid var(--border2);
+      color: var(--muted); cursor: pointer; font-size: .75rem;
+      display: grid; place-items: center; transition: all .18s; flex-shrink: 0;
+    }
+    .btn-logout:hover { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+
+    /* ── MAIN ── */
+    .main-content {
+      position: relative; z-index: 2;
+      margin-left: var(--sidebar-w);
+      height: 100vh; overflow: auto;
+      padding: 2rem 2.5rem;
+    }
+    .main-content::-webkit-scrollbar { width: 5px; }
+    .main-content::-webkit-scrollbar-track { background: transparent; }
+    .main-content::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+    .page-header {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      margin-bottom: 1.75rem; padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .page-eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: .63rem; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--pink); margin-bottom: .3rem;
+      display: flex; align-items: center; gap: .4rem;
+    }
+    .page-eyebrow::before { content: '🌸'; font-size: .7rem; }
+    .page-header h2 {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 1.8rem; letter-spacing: -.01em; line-height: 1;
+      color: var(--plum);
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: rgba(255,248,251,.9);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem;
+      box-shadow: 0 2px 16px rgba(180,80,120,.05);
+    }
+
+    /* ── FILTERS ── */
+    .filters-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: .75rem; margin-bottom: 1.25rem;
+    }
+    .filter-group { display: flex; gap: .5rem; }
+
+    .filter-select {
+      padding: .42rem .8rem;
+      border-radius: 8px;
+      border: 1.5px solid var(--border2);
+      background: rgba(255,255,255,.8);
+      color: var(--text);
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      font-size: .8rem; cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23c9afc0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right .6rem center;
+      padding-right: 1.9rem;
+      transition: border-color .18s;
+    }
+    .filter-select:focus { outline: none; border-color: var(--pink); }
+
+    .user-label { font-family: 'DM Mono', monospace; font-size: .75rem; color: var(--muted); }
+    .user-label strong { color: var(--plum); }
+
+    /* ── TABLE ── */
+    .table { width: 100%; border-collapse: collapse; font-size: .87rem; }
+    .table th {
+      text-align: left; padding: .5rem 1rem;
+      font-family: 'DM Mono', monospace;
+      font-size: .63rem; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--faint); border-bottom: 1px solid var(--border);
+    }
+    .table td { padding: .85rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .table tbody tr { transition: background .15s; }
+    .table tbody tr:hover { background: rgba(244,160,188,.07); }
+    .table tbody tr:last-child td { border-bottom: none; }
+
+    .task-title  { font-weight: 600; font-size: .89rem; color: var(--plum); }
+    .task-desc   { color: var(--muted); font-size: .77rem; margin-top: .14rem; }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: .28rem;
+      padding: .2rem .62rem;
+      border-radius: 6px;
+      font-family: 'DM Mono', monospace;
+      font-size: .67rem; letter-spacing: .04em; font-weight: 500;
+    }
+    .badge::before { content: '✿'; font-size: .55rem; }
+
+    .badge-TODO        { background: rgba(180,160,170,.1); color: var(--muted); }
+    .badge-IN_PROGRESS { background: var(--blue-dim);  color: var(--blue); }
+    .badge-DONE        { background: var(--green-dim); color: var(--green); }
+
+    .badge-low    { background: rgba(180,160,170,.1); color: var(--muted); }
+    .badge-medium { background: var(--gold-dim);  color: var(--gold); }
+    .badge-high   { background: var(--red-dim);   color: var(--red); }
+
+    .actions-cell { display: flex; gap: .4rem; justify-content: flex-end; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 200;
+      background: rgba(255,248,251,.96);
+      border: 1px solid var(--border2);
+      padding: .75rem 1rem;
+      border-radius: 12px;
+      box-shadow: 0 12px 32px rgba(180,80,120,.15);
+      color: var(--text); font-weight: 500; font-size: .87rem;
+      animation: slideIn .25s cubic-bezier(.16,1,.3,1);
+      display: flex; align-items: center; gap: .55rem;
+      max-width: 300px;
+    }
+    .toast.success { border-left: 3px solid var(--green); }
+    .toast.success::before { content: '✿'; color: var(--pink); font-size: 1rem; }
+    .toast.error   { border-left: 3px solid var(--red); }
+    .toast.error::before   { content: '✕'; color: var(--red); font-size: 1rem; }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(16px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ── MODAL ── */
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(180,100,140,.18);
+      backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+      animation: fadeIn .18s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal {
+      width: min(500px, 94vw);
+      background: rgba(255,248,251,.97);
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      padding: 1.75rem;
+      box-shadow: 0 32px 64px rgba(180,80,120,.18), inset 0 1px 0 rgba(255,255,255,.9);
+      animation: modalIn .25s cubic-bezier(.16,1,.3,1);
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(16px) scale(.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1.25rem;
+    }
+    .modal-header h3 {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 1.3rem; color: var(--plum);
+    }
+    .modal-close {
+      width: 30px; height: 30px; border-radius: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--muted); cursor: pointer; font-size: .85rem;
+      display: grid; place-items: center; transition: all .15s;
+    }
+    .modal-close:hover { background: var(--red-dim); color: var(--red); border-color: var(--red); }
+
+    .form-group { margin-bottom: .9rem; }
+    .form-group label {
+      display: block;
+      font-family: 'DM Mono', monospace;
+      font-size: .66rem; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: .35rem;
+    }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; }
+    textarea.input { resize: vertical; min-height: 80px; }
+
+    .modal-footer {
+      display: flex; gap: .65rem; justify-content: flex-end;
+      margin-top: 1.25rem; padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── PROFILE ── */
+    .info-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .info-item .label {
+      font-family: 'DM Mono', monospace;
+      font-size: .63rem; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: .3rem;
+    }
+    .info-item .value { font-weight: 600; color: var(--plum); }
+
+    .code-block {
+      background: rgba(255,240,248,.6);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+      font-family: 'DM Mono', monospace;
+      font-size: .74rem; line-height: 1.65; color: var(--muted);
+      overflow-x: auto; word-break: break-all;
+    }
+    .code-block code { color: var(--pink-deep); }
+
+    .section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--pink); margin-bottom: .6rem; margin-top: 1.25rem;
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .section-label::before { content: '🌸'; font-size: .7rem; }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* ── EMPTY STATE ── */
+    .empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+    .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: .75rem; opacity: .5; }
+    .empty-state p { font-size: .88rem; }
+  </style>
+</head>
+<body>
+
+<!-- Floating petals -->
+<div class="petal-layer" aria-hidden="true">
+  <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+  <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+  <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+  <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+</div>
+
+<!-- ═══ AUTH ═══ -->
+<div id="auth-page">
+  <div class="auth-box">
+    <div class="auth-kamon">🌸</div>
+    <div class="auth-eyebrow">Security Architecture</div>
+    <div class="auth-title">Task Board</div>
+    <div class="auth-subtitle">Final Lab — ลงชื่อเข้าใช้เพื่อดำเนินการต่อ</div>
+
+    <div id="login-form">
+      <div class="form-group">
+        <label>Email</label>
+        <input id="login-email" class="input" type="email" value="alice@lab.local" placeholder="you@lab.local">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input id="login-password" class="input" type="password" value="alice123" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()" style="margin-top:.3rem;">เข้าสู่ระบบ 🌸</button>
+    </div>
+
+    <div id="auth-msg"></div>
+
+    <div class="auth-hint">
+      <strong>🔑 Seed Users</strong>
+      alice@lab.local / alice123 &nbsp;·&nbsp; member<br>
+      bob@lab.local / bob456 &nbsp;·&nbsp; member<br>
+      admin@lab.local / adminpass &nbsp;·&nbsp; admin
+    </div>
+  </div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="app-page" class="hidden">
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">🌸</div>
+      <div>
+        <div class="logo-text">TaskBoard</div>
+        <div class="logo-tag">Final Lab</div>
+      </div>
+    </div>
+
+    <div class="nav-section-label">Navigation</div>
+    <div class="sidebar-nav">
+      <button class="nav-item active" data-page="tasks" onclick="showPage('tasks')">
+        <span class="nav-icon">✅</span> Tasks
+        <span class="badge-count" id="task-count">0</span>
+      </button>
+      <button class="nav-item" data-page="profile" onclick="showPage('profile')">
+        <span class="nav-icon">👤</span> Profile & JWT
+      </button>
+      <a href="logs.html" target="_blank" class="nav-item" style="text-decoration:none;">
+        <span class="nav-icon">📊</span> Log Dashboard
+        <span class="ext-icon">↗</span>
+      </a>
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar" id="sidebar-avatar">?</div>
+        <div class="user-info-small">
+          <div class="name" id="sidebar-name">—</div>
+          <span class="role-pill" id="sidebar-role-badge">—</span>
+        </div>
+        <button class="btn-logout" onclick="doLogout()" title="Logout">✕</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="main-content">
+
+    <!-- TASKS PAGE -->
+    <div id="page-tasks">
+      <div class="page-header">
+        <div>
+          <div class="page-eyebrow">Overview</div>
+          <h2>Task Board</h2>
+        </div>
+        <button class="btn btn-primary" style="width:auto;" onclick="openTaskModal()">+ สร้าง Task</button>
+      </div>
+
+      <div class="card">
+        <div class="filters-bar">
+          <div class="filter-group">
+            <select id="filter-status" class="filter-select" onchange="loadTasks()">
+              <option value="">Status: ทั้งหมด</option>
+              <option value="TODO">TODO</option>
+              <option value="IN_PROGRESS">IN_PROGRESS</option>
+              <option value="DONE">DONE</option>
+            </select>
+            <select id="filter-priority" class="filter-select" onchange="loadTasks()">
+              <option value="">Priority: ทั้งหมด</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <div class="user-label">Logged in as <strong id="user-badge">—</strong></div>
+        </div>
+
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Title</th><th>Status</th><th>Priority</th>
+              <th>Owner</th><th>Updated</th>
+              <th style="text-align:right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tasks-body">
+            <tr><td colspan="6">
+              <div class="empty-state"><div class="empty-icon">🌸</div><p>Loading...</p></div>
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PROFILE PAGE -->
+    <div id="page-profile" class="hidden">
+      <div class="page-header">
+        <div>
+          <div class="page-eyebrow">Account</div>
+          <h2>Profile & JWT Inspector</h2>
+        </div>
+        <button class="btn btn-danger" style="width:auto;" onclick="doLogout()">Logout</button>
+      </div>
+
+      <div class="card">
+        <div class="section-label">User Info</div>
+        <div class="info-grid">
+          <div class="info-item"><div class="label">Username</div><div class="value" id="profile-username">—</div></div>
+          <div class="info-item"><div class="label">Email</div><div class="value" id="profile-email">—</div></div>
+          <div class="info-item"><div class="label">Role</div><div class="value" id="profile-role">—</div></div>
+        </div>
+        <div class="section-label">JWT Token</div>
+        <div class="code-block">
+          <div style="font-size:.68rem;color:var(--faint);margin-bottom:.5rem;">Stored in localStorage → <code>jwt_token</code></div>
+          <div id="jwt-token" style="word-break:break-all;">—</div>
+        </div>
+        <div class="section-label">Decoded Payload</div>
+        <div class="code-block">
+          <pre id="jwt-payload" style="margin:0;white-space:pre-wrap;">—</pre>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ MODAL ═══ -->
+<div id="modal-backdrop" class="modal-backdrop hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Create Task</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Title</label>
+      <input id="task-title" class="input" type="text" placeholder="Task title">
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="task-desc" class="input" rows="3" placeholder="Optional description..."></textarea>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Status</label>
+        <select id="task-status" class="input filter-select" style="width:100%;max-width:none;">
+          <option value="TODO">TODO</option>
+          <option value="IN_PROGRESS">IN_PROGRESS</option>
+          <option value="DONE">DONE</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Priority</label>
+        <select id="task-priority" class="input filter-select" style="width:100%;max-width:none;">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitTask()" id="modal-submit" style="width:auto;min-width:110px;">Save 🌸</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script>
+const API = '';
+let token = localStorage.getItem('jwt_token');
+let currentUser = null;
+let allTasks = [];
+let editingTaskId = null;
+
+function setToast(message, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = message;
+  t.className = `toast ${type}`;
+  t.classList.remove('hidden');
+  clearTimeout(t._timeout);
+  t._timeout = setTimeout(() => t.classList.add('hidden'), 3500);
+}
+
+function getAuthHeaders() {
+  return token
+    ? { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+    : { 'Content-Type': 'application/json' };
+}
+
+async function api(path, opts={}) {
+  const res = await fetch(`${API}${path}`, {
+    ...opts, headers: { ...(opts.headers||{}), ...getAuthHeaders() }
+  });
+  if (res.status === 401) { doLogout(); throw new Error('Unauthorized'); }
+  return res;
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!email || !password) { showAuthMsg('กรุณากรอกข้อมูลให้ครบ','error'); return; }
+  const res = await fetch(`${API}/api/auth/login`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({email, password})
+  });
+  const data = await res.json();
+  if (res.ok) {
+    token = data.token;
+    localStorage.setItem('jwt_token', token);
+    initApp(data.user);
+  } else {
+    showAuthMsg('❌ ' + (data.error||'Login ล้มเหลว'), 'error');
+  }
+}
+
+function showAuthMsg(msg, type) {
+  const el = document.getElementById('auth-msg');
+  el.className = `auth-msg ${type}`;
+  el.textContent = msg;
+}
+
+function doLogout() {
+  localStorage.removeItem('jwt_token');
+  token = null; currentUser = null; allTasks = [];
+  document.getElementById('app-page').classList.add('hidden');
+  document.getElementById('auth-page').classList.remove('hidden');
+}
+
+function decodeJwt(token) {
+  try {
+    const payload = token.split('.')[1];
+    return JSON.parse(decodeURIComponent(atob(payload).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+  } catch { return null; }
+}
+
+async function initApp(user) {
+  currentUser = user;
+  document.getElementById('auth-page').classList.add('hidden');
+  document.getElementById('app-page').classList.remove('hidden');
+  const initials = (user.username||user.email||'?').charAt(0).toUpperCase();
+  document.getElementById('sidebar-avatar').textContent = initials;
+  document.getElementById('sidebar-name').textContent = user.username||user.email;
+  const rb = document.getElementById('sidebar-role-badge');
+  rb.textContent = user.role;
+  rb.className = `role-pill role-${user.role}`;
+  document.getElementById('user-badge').textContent = `${user.username} (${user.role})`;
+  showPage('tasks');
+}
+
+function showPage(page) {
+  ['tasks','profile'].forEach(p => {
+    document.getElementById(`page-${p}`).classList.toggle('hidden', p !== page);
+    const btn = document.querySelector(`[data-page="${p}"]`);
+    if (btn) btn.classList.toggle('active', p === page);
+  });
+  if (page==='tasks') loadTasks();
+  if (page==='profile') loadProfile();
+}
+
+async function loadTasks() {
+  const status = document.getElementById('filter-status').value;
+  const priority = document.getElementById('filter-priority').value;
+  const query = new URLSearchParams();
+  if (status) query.set('status', status);
+  if (priority) query.set('priority', priority);
+  const res = await api(`/api/tasks/?${query.toString()}`);
+  if (!res.ok) return;
+  const data = await res.json();
+  allTasks = data.tasks || [];
+  renderTasks(allTasks);
+  document.getElementById('task-count').textContent = allTasks.length;
+}
+
+function renderTasks(tasks) {
+  const tbody = document.getElementById('tasks-body');
+  if (!tasks.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🌸</div><p>ยังไม่มี task</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = tasks.map(task => {
+    const statusBadge = `<span class="badge badge-${task.status}">${task.status}</span>`;
+    const prioBadge   = `<span class="badge badge-${task.priority}">${task.priority}</span>`;
+    const updated = new Date(task.updated_at).toLocaleString('th-TH', {dateStyle:'short', timeStyle:'short'});
+    const isOwner = currentUser && (currentUser.id===task.user_id || currentUser.role==='admin');
+    const actions = isOwner
+      ? `<button class="btn btn-secondary btn-sm" onclick="openTaskModal(${task.id})">Edit</button>
+         <button class="btn btn-danger btn-sm" onclick="confirmDelete(${task.id})">Delete</button>`
+      : `<span style="color:var(--faint);font-size:.78rem;">—</span>`;
+    return `
+      <tr>
+        <td>
+          <div class="task-title">${escHtml(task.title)}</div>
+          ${task.description ? `<div class="task-desc">${escHtml(task.description)}</div>` : ''}
+        </td>
+        <td>${statusBadge}</td>
+        <td>${prioBadge}</td>
+        <td style="font-size:.84rem;color:var(--muted);">${escHtml(task.username||task.user_id)}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:.74rem;color:var(--muted);">${escHtml(updated)}</td>
+        <td><div class="actions-cell">${actions}</div></td>
+      </tr>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function openTaskModal(taskId=null) {
+  editingTaskId = taskId;
+  const modal = document.getElementById('modal-backdrop');
+  const titleEl = document.getElementById('modal-title');
+  const submitBtn = document.getElementById('modal-submit');
+  if (!taskId) {
+    titleEl.textContent = 'Create Task';
+    document.getElementById('task-title').value = '';
+    document.getElementById('task-desc').value = '';
+    document.getElementById('task-status').value = 'TODO';
+    document.getElementById('task-priority').value = 'medium';
+    submitBtn.textContent = 'Create 🌸';
+  } else {
+    const task = allTasks.find(t => t.id===taskId);
+    if (!task) return;
+    titleEl.textContent = 'Edit Task';
+    document.getElementById('task-title').value = task.title||'';
+    document.getElementById('task-desc').value = task.description||'';
+    document.getElementById('task-status').value = task.status||'TODO';
+    document.getElementById('task-priority').value = task.priority||'medium';
+    submitBtn.textContent = 'Save 🌸';
+  }
+  modal.classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('modal-backdrop').classList.add('hidden');
+  editingTaskId = null;
+}
+
+async function submitTask() {
+  const title = document.getElementById('task-title').value.trim();
+  const description = document.getElementById('task-desc').value.trim();
+  const status = document.getElementById('task-status').value;
+  const priority = document.getElementById('task-priority').value;
+  if (!title) { setToast('Title is required','error'); return; }
+  try {
+    if (editingTaskId) {
+      const res = await api(`/api/tasks/${editingTaskId}`, {method:'PUT', body:JSON.stringify({title,description,status,priority})});
+      if (!res.ok) throw new Error('Update failed');
+      setToast('✿ Task updated');
+    } else {
+      const res = await api('/api/tasks/', {method:'POST', body:JSON.stringify({title,description,status,priority})});
+      if (!res.ok) throw new Error('Create failed');
+      setToast('✿ Task created');
+    }
+    closeModal(); loadTasks();
+  } catch(err) {
+    setToast(err.message||'Server error','error');
+  }
+}
+
+async function confirmDelete(id) {
+  if (!confirm('ยืนยันการลบ task?')) return;
+  try {
+    const res = await api(`/api/tasks/${id}`, {method:'DELETE'});
+    if (!res.ok) throw new Error('Delete failed');
+    setToast('Task deleted');
+    loadTasks();
+  } catch(err) {
+    setToast(err.message||'Server error','error');
+  }
+}
+
+async function loadProfile() {
+  try {
+    const res = await api('/api/auth/me');
+    if (!res.ok) return;
+    const data = await res.json();
+    const user = data.user||{};
+    document.getElementById('profile-username').textContent = user.username||'—';
+    document.getElementById('profile-email').textContent = user.email||'—';
+    document.getElementById('profile-role').textContent = user.role||'—';
+    document.getElementById('jwt-token').textContent = token||'—';
+    const payload = decodeJwt(token);
+    document.getElementById('jwt-payload').textContent = payload ? JSON.stringify(payload,null,2) : 'Invalid token';
+  } catch {}
+}
+
+if (token) {
+  (async () => {
+    try {
+      const res = await fetch(`${API}/api/auth/verify`, {headers:{Authorization:`Bearer ${token}`}});
+      const data = await res.json();
+      if (data.valid) { initApp(data.user); }
+      else { localStorage.removeItem('jwt_token'); token = null; }
+    } catch { localStorage.removeItem('jwt_token'); token = null; }
+  })();
+}
+</script>
+</body>
+</html>
