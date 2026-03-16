@@ -1,305 +1,336 @@
-# ENGSE207 Software Architecture  
-## README — Final Lab Set 1: Microservices + HTTPS + Lightweight Logging
+# ENGSE207 Software Architecture
 
-> เอกสารฉบับนี้ใช้เป็น `README.md` สำหรับ repository ของ **Final Lab Set 1**  
-> นักศึกษาสามารถปรับแก้รายละเอียด เช่น ชื่อสมาชิก, ภาพ architecture, URL หรือคำอธิบายเพิ่มเติม ให้สอดคล้องกับงานจริงของกลุ่ม
+## README — Final Lab Set 2: Microservices + Database-per-Service + Railway Deployment
 
 ---
 
 ## 1. ข้อมูลรายวิชาและสมาชิก
 
-**รายวิชา:** ENGSE207 Software Architecture  
-**ชื่องาน:** Final Lab — ชุดที่ 1: Microservices + HTTPS + Lightweight Logging  
+**รายวิชา:** ENGSE207 Software Architecture
+**ชื่องาน:** Final Lab — ชุดที่ 2: Microservices + Database-per-Service + Cloud Deployment
 
 **สมาชิกในกลุ่ม**
-- ชื่อ-สกุล / รหัสนักศึกษา: นางสาว กันติชา เกิดสี 67543210052-6
-- ชื่อ-สกุล / รหัสนักศึกษา: นางสาว วริศรา สรรพกรพิเศษ 67543210073-2
 
-**Repository:** `final-lab-set1/`
+* ชื่อ-สกุล / รหัสนักศึกษา: นางสาว กันติชา เกิดสี 67543210052-6
+* ชื่อ-สกุล / รหัสนักศึกษา: นางสาว วริศรา สรรพกรพิเศษ 67543210073-2
 
----
-
-## 2. ภาพรวมของระบบ
-
-Final Lab ชุดที่ 1 เป็นการพัฒนาระบบ Task Board แบบ Microservices โดยเน้นหัวข้อสำคัญดังนี้
-
-- การทำงานแบบแยก service
-- การใช้ Nginx เป็น API Gateway
-- การเปิดใช้งาน HTTPS ด้วย Self-Signed Certificate
-- การยืนยันตัวตนด้วย JWT
-- การจัดเก็บ log แบบ Lightweight Logging ผ่าน Log Service
-- การเชื่อมต่อ Frontend กับ Backend ผ่าน HTTPS
-
-งานชุดนี้ **ไม่มี Register** และใช้เฉพาะ **Seed Users** ที่กำหนดไว้ในฐานข้อมูล
+**Repository:** `final-lab-set2/`
 
 ---
 
-## 3. วัตถุประสงค์ของงาน
+# 2. ภาพรวมของระบบ
 
-งานนี้มีจุดมุ่งหมายเพื่อฝึกให้นักศึกษาสามารถ
+Final Lab Set 2 เป็นการต่อยอดจาก Set 1 โดยพัฒนาระบบ **Task Board แบบ Microservices** และปรับโครงสร้างฐานข้อมูลเป็น
 
-- ออกแบบระบบแบบ Microservices ในระดับพื้นฐาน
-- ใช้ Nginx เป็น reverse proxy และ TLS termination
-- ใช้ JWT สำหรับ authentication ระหว่าง frontend และ backend
-- ออกแบบ logging flow ผ่าน REST API และจัดเก็บ log ลงฐานข้อมูล
-- ใช้ Docker Compose เพื่อรวมทุก service ให้ทำงานร่วมกันได้
+**Database-per-Service Pattern**
+
+ซึ่งแต่ละ service จะมี database ของตัวเอง และสามารถ deploy แยกกันได้บน Cloud
+
+ระบบประกอบด้วย 3 Services หลัก
+
+* **Auth Service** – จัดการ Register / Login และ JWT Authentication
+* **Task Service** – จัดการ Task ของผู้ใช้
+* **User Service** – จัดการข้อมูล Profile ของผู้ใช้
+
+Frontend ใช้สำหรับแสดงผล Task Board และเรียกใช้งาน API ของแต่ละ service
 
 ---
 
-## 4. Architecture Overview
+# 3. วัตถุประสงค์ของงาน
 
-> ให้วางภาพ architecture diagram ของกลุ่มไว้ในส่วนนี้  
-> เช่น `docs/architecture-set1.png` หรือแทรกรูปจากโฟลเดอร์ `screenshots/`
+งาน Set 2 มีจุดประสงค์เพื่อฝึกให้นักศึกษา
 
-```text
-Browser / Postman
-       │
-       │ HTTPS :443
-       ▼
-Nginx (API Gateway)
-   ├── /api/auth/*  → auth-service
-   ├── /api/tasks/* → task-service
-   ├── /api/logs/*  → log-service
-   └── /            → frontend
-            │
-            ▼
-     PostgreSQL (shared DB)
+* ออกแบบระบบ **Microservices Architecture**
+* ใช้ **Database-per-Service Pattern**
+* ใช้ **JWT สำหรับ authentication**
+* ใช้ **Docker สำหรับพัฒนาในเครื่อง**
+* Deploy backend services ขึ้น **Railway Cloud Platform**
+* ทดสอบ API ด้วย **Postman**
+
+---
+
+# 4. Architecture Overview
+
+```
+Browser / Frontend
+        │
+        ▼
+    Auth Service
+  (JWT Authentication)
+        │
+        ├──────────────┐
+        ▼              ▼
+   Task Service     User Service
+        │              │
+        ▼              ▼
+     task-db        user-db
+
+Auth Service ใช้ auth-db
 ```
 
-### Services ที่ใช้ในระบบ
-- **nginx** — API Gateway, HTTPS, rate limiting
-- **frontend** — หน้าเว็บ Task Board และ Log Dashboard
-- **auth-service** — Login, Verify, Me
-- **task-service** — CRUD Tasks
-- **log-service** — รับและแสดง logs
-- **postgres** — shared database
+### Services ในระบบ
+
+| Service      | หน้าที่                    |
+| ------------ | -------------------------- |
+| Auth Service | Register / Login / JWT     |
+| Task Service | CRUD Tasks                 |
+| User Service | User Profile               |
+| Frontend     | UI สำหรับใช้งาน Task Board |
+| PostgreSQL   | Database ของแต่ละ service  |
 
 ---
 
-## 5. โครงสร้าง Repository
+# 5. โครงสร้าง Repository
 
-```text
-final-lab-set1/
+```
+final-lab-set2/
 ├── README.md
 ├── TEAM_SPLIT.md
 ├── INDIVIDUAL_REPORT_[studentid].md
 ├── docker-compose.yml
-├── .env.example
-├── nginx/
+│
 ├── frontend/
+│
 ├── auth-service/
+│   ├── Dockerfile
+│   ├── package.json
+│   └── src/
+│
 ├── task-service/
-├── log-service/
-├── db/
-├── scripts/
+│   ├── Dockerfile
+│   ├── package.json
+│   └── src/
+│
+├── user-service/
+│   ├── Dockerfile
+│   ├── package.json
+│   └── src/
+│
 └── screenshots/
 ```
 
 ---
 
-## 6. เทคโนโลยีที่ใช้
+# 6. เทคโนโลยีที่ใช้
 
-- Node.js / Express.js
-- PostgreSQL
-- Nginx
-- Docker / Docker Compose
-- HTML / CSS / JavaScript
-- JWT
-- bcryptjs
+* Node.js
+* Express.js
+* PostgreSQL
+* Docker
+* Docker Compose
+* JWT (jsonwebtoken)
+* bcryptjs
+* HTML / CSS / JavaScript
+* Railway Cloud Platform
 
 ---
 
-## 7. การตั้งค่าและการรันระบบ
+# 7. การรันระบบในเครื่อง
 
-### 7.1 สร้าง Self-Signed Certificate
+### 7.1 รันระบบด้วย Docker
 
-```bash
-chmod +x scripts/gen-certs.sh
-./scripts/gen-certs.sh
 ```
-
-### 7.2 สร้างไฟล์ `.env`
-คัดลอกจาก `.env.example` แล้วกำหนดค่าตามต้องการ เช่น
-
-```env
-POSTGRES_DB=taskboard
-POSTGRES_USER=admin
-POSTGRES_PASSWORD=secret123
-JWT_SECRET=engse207-super-secret-change-me
-JWT_EXPIRES=1h
-```
-
-### 7.3 สร้าง bcrypt hash สำหรับ Seed Users
-ในงานชุดนี้ กลุ่มของเรากำหนดให้ **สร้าง bcrypt hash เอง** ก่อนรันระบบ
-
-ตัวอย่างคำสั่ง:
-
-```bash
-node -e "const b=require('bcryptjs'); console.log(b.hashSync('alice123',10))"
-node -e "const b=require('bcryptjs'); console.log(b.hashSync('bob456',10))"
-node -e "const b=require('bcryptjs'); console.log(b.hashSync('adminpass',10))"
-```
-
-จากนั้นนำค่าที่ได้ไปแทนในไฟล์ `db/init.sql`
-
-### 7.4 รันระบบ
-
-```bash
 docker compose down -v
 docker compose up --build
 ```
 
-### 7.5 เปิดใช้งานผ่าน Browser
-- Frontend: `https://localhost`
-- Log Dashboard: `https://localhost/logs.html`
+### 7.2 เปิดระบบผ่าน Browser
 
-> หมายเหตุ: เนื่องจากใช้ self-signed certificate browser อาจขึ้นคำเตือนด้านความปลอดภัย ให้กดยอมรับเพื่อเข้าทดสอบ
-
----
-
-## 8. Seed Users สำหรับทดสอบ
-
-| Username | Email | Password | Role |
-|---|---|---|---|
-| alice | alice@lab.local | alice123 | member |
-| bob | bob@lab.local | bob456 | member |
-| admin | admin@lab.local | adminpass | admin |
-
-> หมายเหตุ: ต้อง generate bcrypt hash จริงแล้วแทนค่าลงใน `db/init.sql` ก่อน login
-
----
-
-## 9. API Summary
-
-### Auth Service
-- `POST /api/auth/login`
-- `GET /api/auth/verify`
-- `GET /api/auth/me`
-- `GET /api/auth/health`
-
-### Task Service
-- `GET /api/tasks/health`
-- `GET /api/tasks/`
-- `POST /api/tasks/`
-- `PUT /api/tasks/:id`
-- `DELETE /api/tasks/:id`
-
-### Log Service
-- `POST /api/logs/internal`
-- `GET /api/logs/`
-- `GET /api/logs/stats`
-- `GET /api/logs/health`
-
----
-
-## 10. การทดสอบระบบ
-
-### ตัวอย่างลำดับการทดสอบ
-1. รัน `docker compose up --build`
-2. เปิด `https://localhost`
-3. Login ด้วย seed users
-4. สร้าง task ใหม่
-5. ดูรายการ task
-6. แก้ไข task
-7. ลบ task
-8. ทดสอบกรณีไม่มี JWT → ต้องได้ `401`
-9. ทดสอบ Log Dashboard
-10. ทดสอบ rate limiting ของ login
-
-### ตัวอย่าง curl
-```bash
-BASE="https://localhost"
-
-TOKEN=$(curl -sk -X POST $BASE/api/auth/login   -H "Content-Type: application/json"   -d '{"email":"alice@lab.local","password":"alice123"}' |   python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
-
-curl -sk $BASE/api/tasks/ -H "Authorization: Bearer $TOKEN"
+```
+http://localhost:8080
 ```
 
 ---
 
-## 11. Screenshots ที่แนบในงาน
+# 8. API Summary
 
-โฟลเดอร์ `screenshots/` ของกลุ่มนี้ประกอบด้วยภาพดังต่อไปนี้
+## Auth Service
 
-- `01_docker_running.png`
-- `02_https_browser.png`
-- `03_login_success.png`
-- `04_login_fail.png`
-- `05_create_task.png`
-- `06_get_tasks.png`
-- `07_update_task.png`
-- `08_delete_task.png`
-- `09_no_jwt_401.png`
-- `10_logs_api.png`
-- `11_rate_limit.png`
-- `12_frontend_screenshot.png`
+| Method | Endpoint           |
+| ------ | ------------------ |
+| POST   | /api/auth/register |
+| POST   | /api/auth/login    |
+| GET    | /api/auth/me       |
+| GET    | /api/auth/health   |
 
 ---
 
-## 12. การแบ่งงานของทีม
+## Task Service
 
-รายละเอียดการแบ่งงานของสมาชิกอยู่ในไฟล์:
-
-- `TEAM_SPLIT.md`
-
-และรายงานรายบุคคลของสมาชิกแต่ละคนอยู่ในไฟล์:
-
-- `INDIVIDUAL_REPORT_[studentid].md`
-
----
-
-## 13. ปัญหาที่พบและแนวทางแก้ไข
-
-> ให้กลุ่มสรุปปัญหาที่พบจริงระหว่างทำงาน เช่น
-
-- 1. ปัญหา: ไม่สามารถ push ขึ้น GitHub ได้ (Permission denied / 403)
-สาเหตุ: ไม่มีสิทธิ์ใน repository ของเพื่อน
-แนวทางแก้ไข: ให้เจ้าของ repository เพิ่มผู้ใช้เป็น Collaborator ใน GitHub ก่อน จึงสามารถ push โค้ดได้
-- ปัญหา: Git ค้างอยู่ในสถานะ Merge (MERGE_HEAD exists)
-สาเหตุ: มีการ merge แต่ยังไม่ได้ commit ให้เสร็จ
-แนวทางแก้ไข: ทำการ commit การ merge ก่อน
-- ปัญหา: refusing to merge unrelated histories
-สาเหตุ: Repository ในเครื่องกับใน GitHub ถูกสร้างแยกกัน ทำให้ history คนละสาย
-แนวทางแก้ไข: ใช้คำสั่ง git pull origin main --allow-unrelated-histories
-- ปัญหา log dashboard ถูกจำกัดสิทธิ์ admin only
-- ปัญหา Docker volume เก็บข้อมูลเดิมทำให้ seed ใหม่ไม่ทำงาน
+| Method | Endpoint          |
+| ------ | ----------------- |
+| GET    | /api/tasks/health |
+| GET    | /api/tasks        |
+| POST   | /api/tasks        |
+| PUT    | /api/tasks/:id    |
+| DELETE | /api/tasks/:id    |
 
 ---
 
-## 14. ข้อจำกัดของระบบ
+## User Service
 
-- ใช้ self-signed certificate สำหรับการพัฒนา ไม่เหมาะสำหรับ production จริง
-- ใช้ shared database เพียง 1 ก้อน
-- ยังไม่มีระบบ register
-- logging เป็นแบบ lightweight ไม่ใช่ centralized observability platform เต็มรูปแบบ
-- เหมาะสำหรับการเรียนรู้ architecture ระดับพื้นฐานและการต่อยอดไป Set 2
-
----
-
-## 15. การต่อยอดไปยัง Set 2
-
-งาน Set 1 เป็นพื้นฐานสำคัญสำหรับ Set 2 โดยประเด็นที่จะต่อยอด ได้แก่
-
-- เพิ่ม `Register API`
-- เพิ่ม `User Service`
-- เปลี่ยนจาก shared DB ไปเป็น database-per-service
-- Deploy บน Railway Cloud
-- ออกแบบ gateway strategy สำหรับหลาย service
+| Method | Endpoint                |
+| ------ | ----------------------- |
+| GET    | /api/users/health       |
+| GET    | /api/users/me           |
+| PUT    | /api/users/me           |
+| GET    | /api/users (admin only) |
 
 ---
 
-## 16. ภาคผนวก
+# 9. การ Deploy บน Railway
 
-### ไฟล์สำคัญใน repository
-- `docker-compose.yml`
-- `nginx/nginx.conf`
-- `db/init.sql`
-- `auth-service/src/routes/auth.js`
-- `task-service/src/routes/tasks.js`
-- `log-service/src/index.js`
-- `frontend/index.html`
-- `frontend/logs.html`
+ใน Set 2 ระบบถูก deploy ขึ้น Railway โดยแยก service ดังนี้
+
+## Auth Service
+
+Environment Variables
+
+```
+DATABASE_URL=${{auth-db.DATABASE_URL}}
+JWT_SECRET=your-shared-jwt-secret
+JWT_EXPIRES_IN=1h
+PORT=3001
+NODE_ENV=production
+```
 
 ---
 
-> เอกสารฉบับนี้เป็น README สำหรับงาน Final Lab Set 1 ของกลุ่ม และจัดทำเพื่อประกอบการส่งงานในรายวิชา ENGSE207 Software Architecture
+## Task Service
+
+```
+DATABASE_URL=${{task-db.DATABASE_URL}}
+JWT_SECRET=your-shared-jwt-secret
+PORT=3002
+NODE_ENV=production
+```
+
+---
+
+## User Service
+
+```
+DATABASE_URL=${{user-db.DATABASE_URL}}
+JWT_SECRET=your-shared-jwt-secret
+PORT=3003
+NODE_ENV=production
+```
+
+---
+
+# 10. การทดสอบระบบด้วย Postman
+
+### Register User
+
+```
+POST /api/auth/register
+```
+
+### Login
+
+```
+POST /api/auth/login
+```
+
+จะได้ JWT Token กลับมา
+
+---
+
+### Create Task
+
+```
+POST /api/tasks
+Authorization: Bearer <token>
+```
+
+---
+
+### Get Tasks
+
+```
+GET /api/tasks
+Authorization: Bearer <token>
+```
+
+---
+
+### User Profile
+
+```
+GET /api/users/me
+Authorization: Bearer <token>
+```
+
+---
+
+# 11. Screenshots
+
+ในโฟลเดอร์ `screenshots/` มีภาพการทดสอบระบบ เช่น
+
+* docker running
+* register user
+* login success
+* create task
+* get tasks
+* update task
+* delete task
+* user profile API
+* railway deploy success
+
+---
+
+# 12. การแบ่งงานของทีม
+
+รายละเอียดการแบ่งงานของสมาชิกอยู่ในไฟล์
+
+```
+TEAM_SPLIT.md
+```
+
+รายงานรายบุคคลอยู่ในไฟล์
+
+```
+INDIVIDUAL_REPORT_[studentid].md
+```
+
+---
+
+# 13. ปัญหาที่พบและแนวทางแก้ไข
+
+ตัวอย่างปัญหาที่พบระหว่างทำงาน
+
+* Docker container เชื่อมต่อ database ไม่ได้
+
+  * แก้ไขโดยตรวจสอบการตั้งค่า DATABASE_URL
+
+* Login ไม่สำเร็จ (401 Unauthorized)
+
+  * เกิดจาก bcrypt hash ไม่ตรงกับ password
+
+* Deploy Railway แล้ว Application failed to respond
+
+  * เกิดจาก server ไม่ได้ใช้ `process.env.PORT`
+
+* Task Service join table users ไม่ได้
+
+  * เกิดจาก Database-per-service ทำให้ไม่มี table users ใน task-db
+
+---
+
+# 14. ข้อจำกัดของระบบ
+
+* ยังไม่มี API Gateway
+* ไม่มี centralized logging
+* Frontend ยังเป็น static web
+* ระบบยังไม่มี monitoring
+
+---
+
+# 15. สิ่งที่ได้เรียนรู้จากงานนี้
+
+* การออกแบบ Microservices Architecture
+* การใช้ Database-per-Service Pattern
+* การใช้ JWT สำหรับ authentication
+* การใช้ Docker ในการพัฒนา
+* การ deploy backend services ขึ้น Cloud
+* การทดสอบ API ด้วย Postman
