@@ -252,7 +252,7 @@ curl -sk $BASE/api/tasks/ -H "Authorization: Bearer $TOKEN"
 
 > ให้กลุ่มสรุปปัญหาที่พบจริงระหว่างทำงาน เช่น
 
-- 1. ปัญหา: ไม่สามารถ push ขึ้น GitHub ได้ (Permission denied / 403)
+- ปัญหา: ไม่สามารถ push ขึ้น GitHub ได้ (Permission denied / 403)
 สาเหตุ: ไม่มีสิทธิ์ใน repository ของเพื่อน
 แนวทางแก้ไข: ให้เจ้าของ repository เพิ่มผู้ใช้เป็น Collaborator ใน GitHub ก่อน จึงสามารถ push โค้ดได้
 - ปัญหา: Git ค้างอยู่ในสถานะ Merge (MERGE_HEAD exists)
